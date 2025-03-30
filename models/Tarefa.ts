@@ -7,4 +7,5 @@ export interface Tarefa {
   data_fim: string | null; // ISO string ou null
   conteudo: string;
   status: 'pendente' | 'em andamento' | 'concluída'; // Enum de status
+  prioridade: 'baixa' | 'media' | 'alta'; // Enum de prioridade
 }

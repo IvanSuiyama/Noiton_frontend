@@ -7,6 +7,7 @@ export default function CriaTarefa() {
   const [conteudo, setConteudo] = useState('');
   const [dataFim, setDataFim] = useState<string | null>(null);
   const [isDataFimEnabled, setIsDataFimEnabled] = useState(false);
+  const [prioridade, setPrioridade] = useState<string>('media'); // Allow any string temporarily
 
   const getHorarioBrasilia = () => {
     const now = new Date();
@@ -36,6 +37,12 @@ export default function CriaTarefa() {
   };
 
   const handleCreateTask = async () => {
+    const validValues = ['baixa', 'media', 'alta'];
+    if (!validValues.includes(prioridade)) {
+      Alert.alert('Erro', 'Prioridade inválida. Use: baixa, media ou alta.');
+      return;
+    }
+
     const dataInicio = getHorarioBrasilia(); // Data e hora atual no horário de Brasília
     const status = 'pendente'; // Status padrão
 
@@ -49,6 +56,7 @@ export default function CriaTarefa() {
       data_inicio: dataInicio,
       data_fim: formattedDataFim,
       status,
+      prioridade: prioridade as 'baixa' | 'media' | 'alta', // Cast after validation
     };
 
     try {
@@ -70,6 +78,7 @@ export default function CriaTarefa() {
       setConteudo('');
       setDataFim(null);
       setIsDataFimEnabled(false);
+      setPrioridade('media');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       Alert.alert('Erro', errorMessage);
@@ -119,6 +128,14 @@ export default function CriaTarefa() {
         </>
       )}
 
+      <Text style={styles.label}>Prioridade</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Digite a prioridade (baixa, media, alta)"
+        value={prioridade}
+        onChangeText={setPrioridade} // No validation here
+      />
+
       <Button title="Criar Tarefa" onPress={handleCreateTask} />
     </View>
   );
@@ -163,5 +180,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     color: '#555',
+  },
+  picker: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 15,
+    backgroundColor: '#fff',
   },
 });
