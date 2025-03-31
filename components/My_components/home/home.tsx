@@ -19,7 +19,7 @@ export default function HomePage() {
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('HomePage')} // Substitua por sua rota de cadastro
+          onPress={() => navigation.navigate('CriaUsuario')} // Direciona para CriaUsuario
         >
           <Text style={styles.buttonText}>Cadastrar</Text>
         </TouchableOpacity>

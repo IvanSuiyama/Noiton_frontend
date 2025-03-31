@@ -17,6 +17,8 @@ export default function HamburgerMenu() {
   const handleMenuItemPress = (item: string) => {
     if (item === 'Tarefas') {
       setExpandedMenu(expandedMenu === 'Tarefas' ? null : 'Tarefas'); // Expande ou recolhe o menu
+    } else if (item === 'Categorias') {
+      setExpandedMenu(expandedMenu === 'Categorias' ? null : 'Categorias'); // Expande ou recolhe o menu
     } else {
       setMenuVisible(false); // Fecha o menu ao clicar em outros itens
     }
@@ -27,6 +29,15 @@ export default function HamburgerMenu() {
     setMenuVisible(false); // Fecha o menu ao clicar em um subtítulo
     if (subItem === 'Criar Tarefa') {
       navigation.navigate('CriaTarefa'); // Navega para CriaTarefa
+    }
+    if (subItem === 'Listar Tarefa') {
+      navigation.navigate('ListarTarefas'); // Navega para ListarTarefas
+    }
+    if (subItem === 'Criar Categoria') {
+      navigation.navigate('CriaCategoria'); // Navega para CriaCategoria
+    }
+    if (subItem === 'Listar Categoria') {
+      navigation.navigate('ListarCategoria'); // Navega para ListarCategoria
     }
   };
 
@@ -59,16 +70,38 @@ export default function HamburgerMenu() {
                 >
                   <Text style={styles.subMenuItem}>Criar Tarefa</Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.subMenuItemTouchable}
+                  onPress={() => handleSubMenuItemPress('Listar Tarefa')}
+                >
+                  <Text style={styles.subMenuItem}>Listar Tarefa</Text>
+                </TouchableOpacity>
               </View>
             )}
 
-            {/* Categorias */}
+            {/* Categorias com subtítulos */}
             <TouchableOpacity
               style={styles.menuItemTouchable}
               onPress={() => handleMenuItemPress('Categorias')}
             >
               <Text style={styles.menuItem}>Categorias</Text>
             </TouchableOpacity>
+            {expandedMenu === 'Categorias' && (
+              <View style={styles.subMenu}>
+                <TouchableOpacity
+                  style={styles.subMenuItemTouchable}
+                  onPress={() => handleSubMenuItemPress('Criar Categoria')}
+                >
+                  <Text style={styles.subMenuItem}>Criar Categoria</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.subMenuItemTouchable}
+                  onPress={() => handleSubMenuItemPress('Listar Categoria')}
+                >
+                  <Text style={styles.subMenuItem}>Listar Categoria</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Notificações */}
             <TouchableOpacity

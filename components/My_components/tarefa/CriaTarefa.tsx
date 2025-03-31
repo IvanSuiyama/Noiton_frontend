@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, Switch } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, Switch, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Tarefa } from '@/models/Tarefa';
 
 export default function CriaTarefa() {
@@ -7,7 +7,8 @@ export default function CriaTarefa() {
   const [conteudo, setConteudo] = useState('');
   const [dataFim, setDataFim] = useState<string | null>(null);
   const [isDataFimEnabled, setIsDataFimEnabled] = useState(false);
-  const [prioridade, setPrioridade] = useState<string>('media'); // Allow any string temporarily
+  const [prioridade, setPrioridade] = useState<string>('media'); // Prioridade padrão
+  const [categoria, setCategoria] = useState<string>(''); // Campo de categoria
 
   const getHorarioBrasilia = () => {
     const now = new Date();
@@ -43,6 +44,18 @@ export default function CriaTarefa() {
       return;
     }
 
+    const categoriaMap: { [key: string]: number } = {
+      Trabalho: 1,
+      Estudo: 2,
+      Pessoal: 3,
+    };
+
+    const id_categoria = categoriaMap[categoria];
+    if (!id_categoria) {
+      Alert.alert('Erro', 'Categoria inválida. Use: Trabalho, Estudo ou Pessoal.');
+      return;
+    }
+
     const dataInicio = getHorarioBrasilia(); // Data e hora atual no horário de Brasília
     const status = 'pendente'; // Status padrão
 
@@ -57,16 +70,21 @@ export default function CriaTarefa() {
       data_fim: formattedDataFim,
       status,
       prioridade: prioridade as 'baixa' | 'media' | 'alta', // Cast after validation
+      id_categoria, // Adiciona o id_categoria mapeado
     };
 
     try {
-      const response = await fetch('http://192.168.15.12:4000/api/tarefa', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(novaTarefa),
-      });
+      const response = await fetch(
+        'http://192.168.247.119:4000/api/tarefa', // Rota com IP celular
+        // 'http://192.168.15.12:4000/api/tarefa', // Rota com IP WiFi
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(novaTarefa),
+        }
+      );
 
       if (!response.ok) {
         const errorMessage = await response.text();
@@ -79,6 +97,7 @@ export default function CriaTarefa() {
       setDataFim(null);
       setIsDataFimEnabled(false);
       setPrioridade('media');
+      setCategoria('');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       Alert.alert('Erro', errorMessage);
@@ -86,90 +105,111 @@ export default function CriaTarefa() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Título</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Digite o título da tarefa"
-        value={titulo}
-        onChangeText={setTitulo}
-      />
-
-      <Text style={styles.label}>Conteúdo</Text>
-      <TextInput
-        style={styles.textArea}
-        placeholder="Digite o conteúdo da tarefa"
-        value={conteudo}
-        onChangeText={setConteudo}
-        multiline={true}
-        numberOfLines={4}
-      />
-
-      <View style={styles.dataFimContainer}>
-        <Switch
-          value={isDataFimEnabled}
-          onValueChange={setIsDataFimEnabled}
-        />
-        <Text style={styles.checkboxLabel}>
-          {isDataFimEnabled ? 'Definir prazo' : 'Sem prazo'}
-        </Text>
-      </View>
-
-      {isDataFimEnabled && (
-        <>
-          <Text style={styles.label}>Data de Fim</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          <Text style={styles.label}>Título</Text>
           <TextInput
             style={styles.input}
-            placeholder="dd/mm/aaaa"
-            value={dataFim || ''}
-            onChangeText={handleDataFimChange}
-            keyboardType="numeric"
+            placeholder="Digite o título da tarefa"
+            value={titulo}
+            onChangeText={setTitulo}
           />
-        </>
-      )}
 
-      <Text style={styles.label}>Prioridade</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Digite a prioridade (baixa, media, alta)"
-        value={prioridade}
-        onChangeText={setPrioridade} // No validation here
-      />
+          <Text style={styles.label}>Conteúdo</Text>
+          <TextInput
+            style={styles.textArea}
+            placeholder="Digite o conteúdo da tarefa"
+            value={conteudo}
+            onChangeText={setConteudo}
+            multiline={true}
+            numberOfLines={4}
+          />
 
-      <Button title="Criar Tarefa" onPress={handleCreateTask} />
-    </View>
+          <View style={styles.dataFimContainer}>
+            <Switch
+              value={isDataFimEnabled}
+              onValueChange={setIsDataFimEnabled}
+            />
+            <Text style={styles.checkboxLabel}>
+              {isDataFimEnabled ? 'Definir prazo' : 'Sem prazo'}
+            </Text>
+          </View>
+
+          {isDataFimEnabled && (
+            <>
+              <Text style={styles.label}>Data de Fim</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="dd/mm/aaaa"
+                value={dataFim || ''}
+                onChangeText={handleDataFimChange}
+                keyboardType="numeric"
+              />
+            </>
+          )}
+
+          <Text style={styles.label}>Prioridade</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite a prioridade (baixa, media, alta)"
+            value={prioridade}
+            onChangeText={setPrioridade}
+          />
+
+          <Text style={styles.label}>Categoria</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite a categoria (Trabalho, Estudo, Pessoal)"
+            value={categoria}
+            onChangeText={setCategoria}
+          />
+
+          <Button title="Criar Tarefa" onPress={handleCreateTask} />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5dc', // Fundo bege
   },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: '#000', // Texto preto
   },
   input: {
     height: 40,
-    borderColor: '#ccc',
+    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
+    color: '#000', // Texto preto
   },
   textArea: {
-    borderColor: '#ccc',
+    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
     textAlignVertical: 'top',
+    color: '#000', // Texto preto
   },
   dataFimContainer: {
     flexDirection: 'row',
@@ -179,14 +219,15 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 10,
     fontSize: 14,
-    color: '#555',
+    color: '#000', // Texto preto
   },
   picker: {
     height: 40,
-    borderColor: '#ccc',
+    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
+    color: '#000', // Texto preto
   },
 });

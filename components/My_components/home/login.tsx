@@ -13,13 +13,17 @@ export default function Login() {
     try {
       console.log('Tentando login com:', { email, senha: password });
 
-      const response = await fetch('http://192.168.15.12:4000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, senha: password }),
-      });
+      const response = await fetch(
+        'http://192.168.247.119:4000/api/login', // Rota com IP celular
+        // 'http://192.168.15.12:4000/api/login', // Rota com IP WiFi
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, senha: password }),
+        }
+      );
 
       console.log('Resposta do servidor:', response.status);
 
