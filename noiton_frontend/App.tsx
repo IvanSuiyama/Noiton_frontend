@@ -1,18 +1,7 @@
+import 'react-native-gesture-handler';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import SelectBox from './src/components/SelectBox';
+import AppRoutes from './src/routes/Route';// Importação do roteador
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <SelectBox />
-    </View>
-  );
+  return <AppRoutes />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-});
