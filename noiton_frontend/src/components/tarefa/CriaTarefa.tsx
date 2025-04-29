@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, Switch, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker'; // Import Picker
 import { Tarefa } from '../../models/Tarefa';
 import { IP_WIFI } from '@env';
 
@@ -150,12 +151,17 @@ export default function CriaTarefa() {
           )}
 
           <Text style={styles.label}>Prioridade</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite a prioridade (baixa, media, alta)"
-            value={prioridade}
-            onChangeText={setPrioridade}
-          />
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={prioridade}
+              onValueChange={(itemValue) => setPrioridade(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Alta" value="alta" />
+              <Picker.Item label="Média" value="media" />
+              <Picker.Item label="Baixa" value="baixa" />
+            </Picker>
+          </View>
 
           <Text style={styles.label}>Categoria</Text>
           <TextInput
@@ -218,13 +224,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000', // Texto preto
   },
-  picker: {
-    height: 40,
-    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
+  pickerContainer: {
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
     borderRadius: 5,
     marginBottom: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
+  },
+  picker: {
+    height: 40,
     color: '#000', // Texto preto
   },
 });
