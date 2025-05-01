@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, Button, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import { StackNavigationProp } from '@react-navigation/stack'; // Corrigir a importação
 import type { RootStackParamList } from '@/routes/Route'; // Importação do tipo RootStackParamList
 import { IP_WIFI } from '@env'; // Importa a variável do .env
+import { useUserContext } from '@/context/UserContext'; // Import the UserContext
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Login'>>(); // Tipagem do useNavigation
+  const { setUserCpf } = useUserContext(); // Access the context function to set CPF
 
   const handleLogin = async () => {
     try {
@@ -36,11 +38,14 @@ export default function Login() {
       const data = await response.json();
       console.log('Dados recebidos:', data);
 
-      if (data.token) { // Verifica se o token foi retornado
+      if (data.token && data.cpf) { // Verifica se o token e o CPF foram retornados
+        console.log('CPF recebido:', data.cpf); // Log para depuração
+        setUserCpf(data.cpf); // Armazena o CPF no contexto
         Alert.alert('Login bem-sucedido', 'Bem-vindo!');
         navigation.navigate('TelaPrincipal'); // Redireciona para TelaPrincipal
       } else {
-        Alert.alert('Erro no login', 'Email ou senha incorretos.');
+        console.error('CPF ou token ausente na resposta do servidor.');
+        Alert.alert('Erro no login', 'Dados incompletos retornados do servidor.');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';

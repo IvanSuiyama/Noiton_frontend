@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HamburgerMenu from '../menu/HamburguerMenu';
+import PopUpUser from './PopUpUser';
 
 export default function TelaPrincipal() {
+  const [isPopUpVisible, setPopUpVisible] = useState(false);
+
   const handleAvatarPress = () => {
-    Alert.alert('Olá!', 'Bem-vindo a o Noiton!');
+    setPopUpVisible(true);
   };
 
   return (
@@ -18,9 +21,12 @@ export default function TelaPrincipal() {
         <MaterialIcons name="account-circle" size={40} color="#000" />
       </TouchableOpacity>
 
+      {/* PopUpUser */}
+      <PopUpUser visible={isPopUpVisible} onClose={() => setPopUpVisible(false)} />
+
       {/* Conteúdo da Tela */}
       <View style={styles.content}>
-        <Text style={styles.text}>Bem-vindo a o Noiton!</Text>
+        <Text style={styles.text}>Bem-vindo a o Noiton!</Text> {/* Certifique-se de que está dentro de <Text> */}
       </View>
     </View>
   );

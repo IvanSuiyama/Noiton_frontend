@@ -1,7 +1,11 @@
-import 'react-native-gesture-handler';
 import React from 'react';
-import AppRoutes from './src/routes/Route';// Importação do roteador
+import { UserProvider } from '@/context/UserContext'; // Importa o UserProvider
+import AppRoutes from '@/routes/Route';
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <UserProvider>
+      <AppRoutes />
+    </UserProvider>
+  );
 }
