@@ -39,6 +39,9 @@ export default function HamburgerMenu() {
     if (subItem === 'Listar Categoria') {
       navigation.navigate('ListarCategoria'); // Navega para ListarCategoria
     }
+    if (subItem === 'Criar Workspace') {
+      navigation.navigate('CriaWorkspace'); // Navega para CriaWorkspace
+    }
   };
 
   return (
@@ -99,6 +102,12 @@ export default function HamburgerMenu() {
                   onPress={() => handleSubMenuItemPress('Listar Categoria')}
                 >
                   <Text style={styles.subMenuItem}>Listar Categoria</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.subMenuItemTouchable}
+                  onPress={() => handleSubMenuItemPress('Criar Workspace')}
+                >
+                  <Text style={styles.subMenuItem}>Criar Workspace</Text>
                 </TouchableOpacity>
               </View>
             )}

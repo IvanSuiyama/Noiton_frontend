@@ -10,6 +10,7 @@ import ListarCategoria from '@/components/categoria/ListarCategoria';
 import ListarTarefas from '@/components/tarefa/ListarTarefas';
 import CriaUsuario from '@/components/usuario/CriaUsuario';
 import EditaUsuario from '@/components/usuario/EditaUsuario';
+import CriaWorkspace from '@/components/workspace/CriaWorkspace';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -21,6 +22,7 @@ export type RootStackParamList = {
   ListarTarefas: undefined;
   CriaUsuario: undefined;
   EditaUsuario: undefined;
+  CriaWorkspace: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -38,6 +40,7 @@ export default function AppRoutes() {
         <Stack.Screen name="ListarTarefas" component={ListarTarefas} />
         <Stack.Screen name="CriaUsuario" component={CriaUsuario} />
         <Stack.Screen name="EditaUsuario" component={EditaUsuario} />
+        <Stack.Screen name="CriaWorkspace" component={CriaWorkspace} />
       </Stack.Navigator>
     </NavigationContainer>
   );

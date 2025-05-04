@@ -29,6 +29,11 @@ export default function CriaUsuario() {
   };
 
   const handleCreateUser = async () => {
+    console.log('handleCreateUser called'); // Log para depuração
+
+    const baseURL = `${IP_WIFI}`; // Certifique-se de incluir o protocolo
+    console.log(`Base URL: ${baseURL}`); // Log para verificar o endpoint
+
     if (!validarCPF(cpf)) {
       Alert.alert('Erro', 'CPF inválido.');
       return;
@@ -40,9 +45,9 @@ export default function CriaUsuario() {
     }
 
     try {
-      // Verifica se o e-mail já está cadastrado
+      console.log('Fetching user list...'); // Log para depuração
       const response = await fetch(
-        `${IP_WIFI}/api/usuario/list`, // Use the IP_WIFI variable
+        `${baseURL}/api/usuario/list`, // Use baseURL com protocolo
         {
           method: 'GET',
         }
@@ -50,6 +55,7 @@ export default function CriaUsuario() {
 
       if (!response.ok) {
         const errorMessage = await response.text();
+        console.error('Error fetching user list:', errorMessage); // Log de erro
         throw new Error(errorMessage);
       }
 
@@ -61,7 +67,7 @@ export default function CriaUsuario() {
         return;
       }
 
-      // Cria o novo usuário
+      console.log('Creating new user...'); // Log para depuração
       const novoUsuario: Omit<Usuario, 'id_workspace'> = {
         cpf,
         nome,
@@ -71,7 +77,7 @@ export default function CriaUsuario() {
       };
 
       const createResponse = await fetch(
-        `${IP_WIFI}/api/usuario`, // Use the IP_WIFI variable
+        `${baseURL}/api/usuario`, // Use baseURL com protocolo
         {
           method: 'POST',
           headers: {
@@ -83,6 +89,7 @@ export default function CriaUsuario() {
 
       if (!createResponse.ok) {
         const errorMessage = await createResponse.text();
+        console.error('Error creating user:', errorMessage); // Log de erro
         throw new Error(errorMessage);
       }
 
@@ -93,8 +100,9 @@ export default function CriaUsuario() {
       setSenha('');
       setTelefone('');
     } catch (error) {
+      console.error('Network or server error:', error); // Log de erro
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      Alert.alert('Erro', errorMessage);
+      Alert.alert('Erro', `Erro de conexão: ${errorMessage}`);
     }
   };
 
