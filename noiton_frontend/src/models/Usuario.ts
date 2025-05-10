@@ -4,5 +4,4 @@ export default interface Usuario {
     email: string;
     senha: string;
     telefone: string;
-    id_workspace: number;
 }

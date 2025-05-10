@@ -86,23 +86,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5dc', // Cor de fundo bege
+    backgroundColor: '#f5f5dc', // Fundo bege
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#000',
+    color: '#8B4513', // Texto marrom
   },
   input: {
     width: '100%',
     height: 40,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#8B4513', // Borda marrom
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 15,
-    backgroundColor: 'transparent', // Campo transparente
+    backgroundColor: '#fff', // Fundo branco
     color: '#000', // Texto preto
   },
   buttonContainer: {

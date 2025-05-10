@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5dc', // Cor de fundo bege
+    backgroundColor: '#f5f5dc', // Fundo bege
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -41,14 +41,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#0000ff', // Azul
+    backgroundColor: '#8B4513', // Marrom
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 15,
     marginRight: 10,
   },
   buttonText: {
-    color: '#000', // Preto
+    color: '#fff', // Texto branco
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#8B4513', // Texto marrom
     textAlign: 'center',
     paddingHorizontal: 20,
     marginTop: 50,

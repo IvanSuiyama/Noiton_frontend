@@ -150,16 +150,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#000', // Texto preto
+    color: '#8B4513', // Texto marrom
   },
   input: {
     height: 40,
-    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
+    borderColor: '#8B4513', // Borda marrom
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
+    backgroundColor: '#fff', // Fundo branco
     color: '#000', // Texto preto
   },
   buttonContainer: {
