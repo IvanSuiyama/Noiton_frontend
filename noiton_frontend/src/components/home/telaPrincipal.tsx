@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#8B4513', // Texto marrom escuro
     textAlign: 'center',
   },
   // Linhas decorativas no fundo

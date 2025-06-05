@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Button, Alert } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Button, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack'; // Corrigir a importação
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Use NativeStackNavigationProp
 import type { RootStackParamList } from '@/routes/Route'; // Importação do tipo RootStackParamList
-import { IP_WIFI } from '@env'; // Importa a variável do .env
+import { IP_WIFI, IP_CELULAR } from '@env'; // Importa a variável do .env
 import { useUserContext } from '@/context/UserContext'; // Import the UserContext
+import { useAuth } from '@/context/ApiContext'; // Importa o AuthContext
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Login'>>(); // Tipagem do useNavigation
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Remova o segundo parâmetro
   const { setUserCpf } = useUserContext(); // Access the context function to set CPF
+  const { setToken } = useAuth(); // Pegue o setToken do contexto de autenticação
 
   const handleLogin = async () => {
     try {
       console.log('Tentando login com:', { email, senha: password });
 
       const response = await fetch(
-        `${IP_WIFI}/api/login`, // Utiliza a variável IP_WIFI
+        `${IP_CELULAR}/api/login`, // Utiliza a variável IP_WIFI
         {
           method: 'POST',
           headers: {
@@ -41,6 +43,7 @@ export default function Login() {
       if (data.token && data.cpf) { // Verifica se o token e o CPF foram retornados
         console.log('CPF recebido:', data.cpf); // Log para depuração
         setUserCpf(data.cpf); // Armazena o CPF no contexto
+        setToken(data.token); // Salve o token no contexto de autenticação
         Alert.alert('Login bem-sucedido', 'Bem-vindo!');
         navigation.navigate('TelaPrincipal'); // Redireciona para TelaPrincipal
       } else {
@@ -55,55 +58,77 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Digite seu email"
-        placeholderTextColor="#000"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Digite sua senha"
-        placeholderTextColor="#000"
-        secureTextEntry={true} // Oculta o texto com asteriscos
-        value={password}
-        onChangeText={setPassword}
-      />
-      <View style={styles.buttonContainer}>
-        <Button title="Entrar" onPress={handleLogin} />
-      </View>
-    </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: '#f5f5dc' }} // Fundo bege ocupa toda a tela
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={80}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Login</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite seu email"
+            placeholderTextColor="#000"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Digite sua senha"
+            placeholderTextColor="#000"
+            secureTextEntry={true} // Oculta o texto com asteriscos
+            value={password}
+            onChangeText={setPassword}
+          />
+          <View style={styles.buttonContainer}>
+            <Button title="Entrar" onPress={handleLogin} color="#8B4513" /> {/* Botão marrom */}
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 80,
+  },
   container: {
-    flex: 1,
+    width: '100%',
+    maxWidth: 400,
+    minWidth: 0,
+    alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5dc', // Fundo bege
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#8B4513', // Texto marrom
+    color: '#8B4513',
+    textAlign: 'center',
+    width: '100%',
   },
   input: {
     width: '100%',
+    minWidth: 0,
     height: 40,
     borderWidth: 1,
-    borderColor: '#8B4513', // Borda marrom
+    borderColor: '#8B4513',
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 15,
-    backgroundColor: '#fff', // Fundo branco
-    color: '#000', // Texto preto
+    backgroundColor: '#fff',
+    color: '#8B4513',
   },
   buttonContainer: {
     width: '100%',

@@ -42,7 +42,7 @@ export default function CriaUsuario() {
     try {
       // Verifica se o e-mail já está cadastrado
       const response = await fetch(
-        `${IP_WIFI}/api/usuario/list`, // Use the IP_WIFI variable
+        `${IP_CELULAR}/api/usuario/list`,
         {
           method: 'GET',
         }
@@ -71,7 +71,7 @@ export default function CriaUsuario() {
       };
 
       const createResponse = await fetch(
-        `${IP_WIFI}/api/usuario`, // Use the IP_WIFI variable
+        `${IP_CELULAR}/api/usuario`, // Use the IP_WIFI variable
         {
           method: 'POST',
           headers: {
@@ -102,8 +102,13 @@ export default function CriaUsuario() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={80}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.container}>
           <Text style={styles.label}>CPF</Text>
           <TextInput
@@ -149,7 +154,7 @@ export default function CriaUsuario() {
             keyboardType="phone-pad"
           />
 
-          <Button title="Cadastrar Usuário" onPress={handleCreateUser} />
+          <Button title="Cadastrar Usuário" onPress={handleCreateUser} color="#8B4513" /> {/* Botão marrom */}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -163,22 +168,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5dc', // Fundo bege
+    backgroundColor: '#f5f5dc',
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
   },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#8B4513', // Texto marrom
+    color: '#8B4513',
   },
   input: {
     height: 40,
-    borderColor: '#8B4513', // Borda marrom
+    borderColor: '#8B4513',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
-    backgroundColor: '#fff', // Fundo branco
-    color: '#000', // Texto preto
+    backgroundColor: '#fff',
+    color: '#8B4513',
+    width: '100%',
+    minWidth: 0,
   },
 });

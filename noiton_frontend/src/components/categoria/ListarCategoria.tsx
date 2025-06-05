@@ -1,15 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import Categoria from '@/models/Categoria';
-import { IP_WIFI } from '@env'; // Importa a variável do .env
+import { IP_WIFI, IP_CELULAR } from '@env'; // Importa a variável do .env
+import { useAuth } from '@/context/ApiContext';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@/routes/Route';
 
 export default function ListarCategoria() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const { token, isAuthenticated, logout } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   useEffect(() => {
+    if (!isAuthenticated || !token) {
+      console.warn('Token ausente ou usuário não autenticado. Não será feita a requisição.');
+      return;
+    }
     const fetchCategorias = async () => {
       try {
-        const response = await fetch(`${IP_WIFI}/api/categorialist`); // Utiliza a variável IP_WIFI
+        console.log('Enviando token no header:', token);
+        const response = await fetch(`${IP_WIFI}/api/categorialist`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.status === 401) {
+          console.error('Erro 401 ao buscar categorias (token inválido ou expirado)');
+          return;
+        }
         if (!response.ok) {
           throw new Error('Erro ao buscar categorias');
         }
@@ -21,16 +40,29 @@ export default function ListarCategoria() {
     };
 
     fetchCategorias();
-  }, []);
+  }, [isAuthenticated, token]);
 
   const handleDelete = async (id: number) => {
+    if (!token) {
+      console.warn('Token ausente. Não será feita a requisição de exclusão.');
+      return;
+    }
     try {
+      console.log('Enviando token no header (delete):', token);
       const response = await fetch(
-        `${IP_WIFI}/api/categoria/${id}`, // Utiliza a variável IP_WIFI
+        `${IP_CELULAR}/api/categoria/${id}`,
         {
           method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+
+      if (response.status === 401) {
+        console.error('Erro 401 ao deletar categoria (token inválido ou expirado)');
+        return;
+      }
 
       if (!response.ok) {
         const errorMessage = await response.text();
@@ -73,25 +105,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5dc', // Fundo bege
+    backgroundColor: '#f5f5dc',
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
   },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#000', // Texto preto
+    color: '#8B4513', // Texto marrom escuro
   },
   itemContainer: {
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
-    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
+    backgroundColor: '#fff',
+    borderColor: '#8B4513',
     borderWidth: 1,
+    width: '100%',
+    minWidth: 0,
   },
   itemText: {
     fontSize: 14,
-    color: '#000', // Texto preto
+    color: '#8B4513', // Texto marrom escuro
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -99,7 +136,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   deleteButton: {
-    backgroundColor: 'red', // Fundo vermelho
+    backgroundColor: '#8B4513', // Fundo marrom
     padding: 10,
     borderRadius: 5, // Bordas arredondadas
     alignItems: 'center',

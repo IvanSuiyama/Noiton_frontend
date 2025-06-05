@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useUserContext } from '@/context/UserContext';
-import { IP_WIFI } from '@env'; // Import the variable from .env
+import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
 import { useNavigation, CommonActions } from '@react-navigation/native'; // Import navigation hook and CommonActions
 
 export default function EditaUsuario() {
@@ -21,7 +21,7 @@ export default function EditaUsuario() {
 
   const fetchUserData = async (cpf: string) => {
     try {
-      const response = await fetch(`${IP_WIFI}/api/usuario/${cpf}`, {
+      const response = await fetch(`${IP_CELULAR}/api/usuario/${cpf}`, {
         method: 'GET',
       });
 
@@ -57,7 +57,7 @@ export default function EditaUsuario() {
         ...(senhaAlterada && { senha }), // Inclui a senha apenas se ela foi alterada
       };
 
-      const response = await fetch(`${IP_WIFI}/api/usuario/${userCpf}`, {
+      const response = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -144,23 +144,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5dc', // Fundo bege
+    backgroundColor: '#f5f5dc',
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
   },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#8B4513', // Texto marrom
+    color: '#8B4513',
   },
   input: {
     height: 40,
-    borderColor: '#8B4513', // Borda marrom
+    borderColor: '#8B4513',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
-    backgroundColor: '#fff', // Fundo branco
-    color: '#000', // Texto preto
+    backgroundColor: '#fff',
+    color: '#8B4513',
+    width: '100%',
+    minWidth: 0,
   },
   buttonContainer: {
     marginTop: 15,

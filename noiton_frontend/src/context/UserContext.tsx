@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 interface UserContextProps {
   userCpf: string | null;
-  setUserCpf: (cpf: string) => void;
+  setUserCpf: (cpf: string | null) => void; // Permite null para logout
 }
 
 const UserContext = createContext<UserContextProps | undefined>(undefined);

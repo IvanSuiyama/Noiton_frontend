@@ -33,9 +33,6 @@ export default function HamburgerMenu() {
     if (subItem === 'Listar Tarefa') {
       navigation.navigate('ListarTarefas'); // Navega para ListarTarefas
     }
-    if (subItem === 'Criar Categoria') {
-      navigation.navigate('CriaCategoria'); // Navega para CriaCategoria
-    }
     if (subItem === 'Listar Categoria') {
       navigation.navigate('ListarCategoria'); // Navega para ListarCategoria
     }
@@ -90,12 +87,6 @@ export default function HamburgerMenu() {
               <View style={styles.subMenu}>
                 <TouchableOpacity
                   style={styles.subMenuItemTouchable}
-                  onPress={() => handleSubMenuItemPress('Criar Categoria')}
-                >
-                  <Text style={styles.subMenuItem}>Criar Categoria</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.subMenuItemTouchable}
                   onPress={() => handleSubMenuItemPress('Listar Categoria')}
                 >
                   <Text style={styles.subMenuItem}>Listar Categoria</Text>
@@ -135,9 +126,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   menu: {
-    width: '50%',
-    backgroundColor: '#D2B48C',
-    padding: 20,
+    width: '70%', // Responsivo: ocupa 70% da largura da tela
+    maxWidth: 320,
+    minWidth: 180,
+    backgroundColor: '#f5f5dc', // Fundo bege claro
+    padding: 16,
     borderTopRightRadius: 10,
     borderBottomRightRadius: 10,
     marginTop: 29,
@@ -146,22 +139,24 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
+    backgroundColor: '#8B4513', // Fundo marrom escuro forte (apenas títulos)
   },
   menuItem: {
     fontSize: 18,
-    color: '#F5F5DC',
+    color: '#fff', // Letras brancas para contraste (apenas títulos)
     fontWeight: 'bold',
   },
   subMenu: {
-    paddingLeft: 20, // Indenta os subtítulos
+    paddingLeft: 12, // Indenta os subtítulos
   },
   subMenuItemTouchable: {
     padding: 5,
     borderRadius: 5,
     marginBottom: 5,
+    backgroundColor: '#f5f5dc', // Fundo bege claro (subtítulos)
   },
   subMenuItem: {
     fontSize: 16,
-    color: '#F5F5DC',
+    color: '#8B4513', // Texto marrom escuro (subtítulos)
   },
 });

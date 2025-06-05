@@ -4,7 +4,7 @@ import { useUserContext } from '@/context/UserContext';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack'; // Corrigir a importação
 import Usuario from '@/models/Usuario';
-import { IP_WIFI } from '@env';
+import { IP_WIFI, IP_CELULAR } from '@env';
 
 interface PopUpUserProps {
   visible: boolean;
@@ -32,7 +32,7 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
         throw new Error('CPF inválido ou ausente.');
       }
 
-      const url = `${IP_WIFI}/api/usuario/${cpf}`;
+      const url = `${IP_CELULAR}/api/usuario/${cpf}`;
       console.log('URL da requisição:', url); // Log da URL para depuração
 
       const response = await fetch(url);
