@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import Usuario from '../../models/Usuario';
 import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@/routes/Route';
 
 export default function CriaUsuario() {
   const [cpf, setCpf] = useState('');
@@ -9,6 +12,7 @@ export default function CriaUsuario() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [telefone, setTelefone] = useState('');
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const validarCPF = (cpf: string): boolean => {
     cpf = cpf.replace(/\D/g, ''); // Remove caracteres não numéricos
@@ -92,6 +96,8 @@ export default function CriaUsuario() {
       setEmail('');
       setSenha('');
       setTelefone('');
+      // Redireciona para a tela HomePage após cadastro
+      navigation.navigate('HomePage');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       Alert.alert('Erro', errorMessage);

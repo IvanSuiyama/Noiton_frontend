@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack'; // Corrigir a importação
 import Usuario from '@/models/Usuario';
 import { IP_WIFI, IP_CELULAR } from '@env';
+import Logoff from './Logoff';
 
 interface PopUpUserProps {
   visible: boolean;
@@ -14,6 +15,7 @@ interface PopUpUserProps {
 export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
   const { userCpf } = useUserContext();
   const [userData, setUserData] = useState<Usuario | null>(null);
+  const [showLogoff, setShowLogoff] = useState(false);
   const navigation = useNavigation<StackNavigationProp<any>>();
 
   useEffect(() => {
@@ -60,6 +62,10 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
     }
   };
 
+  if (showLogoff) {
+    return <Logoff />;
+  }
+
   return (
     <Modal visible={visible} transparent={true} animationType="slide">
       <View style={styles.modalContainer}>
@@ -86,7 +92,7 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
                 <Button
                   title="Editar"
                   onPress={() => navigation.navigate('EditaUsuario')}
-                  color="#8B4513" // Cor de fundo marrom
+                  color="#8B4513"
                 />
               </View>
             </>
@@ -94,7 +100,14 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
             <Text>Carregando dados do usuário...</Text>
           )}
           <View style={styles.buttonContainer}>
-            <Button title="Fechar" onPress={onClose} color="#8B4513" /> {/* Cor de fundo marrom */}
+            <Button title="Fechar" onPress={onClose} color="#8B4513" />
+          </View>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="LogOff"
+              color="#B22222"
+              onPress={() => setShowLogoff(true)}
+            />
           </View>
         </View>
       </View>

@@ -1,45 +1,128 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, Switch, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Switch, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { Tarefa } from '../../models/Tarefa';
-import { IP_WIFI, IP_CELULAR } from '@env';
-import { useNavigation, useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@/routes/Route';
+import type { RootStackParamList } from '@/routes/Route';
 import { useAuth } from '@/context/ApiContext';
+import { IP_WIFI, IP_CELULAR } from '@env';
 
-export default function CriaTarefa() {
+type EditaTarefaRouteProp = {
+  params: {
+    id_tarefa: number;
+  };
+};
+
+export default function EditaTarefa() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute() as EditaTarefaRouteProp;
+  const { token, isAuthenticated } = useAuth();
+
   const [titulo, setTitulo] = useState('');
   const [conteudo, setConteudo] = useState('');
+  const [dataInicio, setDataInicio] = useState<string>('');
   const [dataFim, setDataFim] = useState<string | null>(null);
   const [isDataFimEnabled, setIsDataFimEnabled] = useState(false);
-  const [prioridade, setPrioridade] = useState<string>('media'); // Prioridade padrão
+  const [prioridade, setPrioridade] = useState<string>('media');
+  const [status, setStatus] = useState<string>('pendente');
   const [categorias, setCategorias] = useState<{ id_categoria: number; nome: string }[]>([]);
-  const [categoria, setCategoria] = useState<number | null>(null); // id da categoria selecionada
-  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<number[]>([]); // Permitir múltiplas categorias
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { token, isAuthenticated, logout } = useAuth();
-  const isFocused = useIsFocused();
+  const [categoria, setCategoria] = useState<number | null>(null);
+  // Permitir múltiplas categorias
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<number[]>([]);
 
-  const getHorarioBrasiliaISO = () => {
-    const now = new Date();
-    // Ajusta para UTC-3 (Brasília)
-    now.setHours(now.getHours() - (now.getTimezoneOffset() / 60) - 3);
-    return now.toISOString();
-  };
+  // Carrega dados da tarefa e categorias ao entrar na tela
+  useFocusEffect(
+    useCallback(() => {
+      if (!isAuthenticated || !token) return;
+
+      const fetchTarefa = async () => {
+        try {
+          if (!route?.params?.id_tarefa) {
+            Alert.alert('Erro', 'ID da tarefa não informado.');
+            return;
+          }
+          let response = await fetch(`${IP_CELULAR}/api/tarefa/${route.params.id_tarefa}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!response.ok) {
+            response = await fetch(`${IP_WIFI}/api/tarefa/${route.params.id_tarefa}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          }
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Erro ao buscar tarefa:', errorText);
+            throw new Error('Erro ao buscar tarefa');
+          }
+          let tarefa = await response.json();
+          if (!tarefa || typeof tarefa !== 'object' || !('titulo' in tarefa)) {
+            Alert.alert('Erro', 'Tarefa não encontrada ou resposta inválida.');
+            return;
+          }
+          setTitulo(tarefa.titulo || '');
+          setConteudo(tarefa.conteudo || '');
+          setDataInicio(tarefa.data_inicio || '');
+          setPrioridade(tarefa.prioridade || 'media');
+          setStatus(tarefa.status || 'pendente');
+          // Seleção múltipla de categorias
+          setCategoriasSelecionadas(Array.isArray(tarefa.categorias) ? tarefa.categorias.map((cat: { id_categoria: number }) => cat.id_categoria) : []);
+          if (tarefa.data_fim) {
+            setIsDataFimEnabled(true);
+            setDataFim(formatDateToInput(tarefa.data_fim));
+          } else {
+            setIsDataFimEnabled(false);
+            setDataFim(null);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar tarefa:', error);
+          Alert.alert('Erro', error instanceof Error ? error.message : 'Erro ao carregar tarefa');
+        }
+      };
+
+      const fetchCategorias = async () => {
+        try {
+          let response = await fetch(`${IP_CELULAR}/api/categorialist`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!response.ok) {
+            response = await fetch(`${IP_WIFI}/api/categorialist`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          }
+          if (!response.ok) throw new Error('Erro ao buscar categorias');
+          const data = await response.json();
+          const categoriasArray = Array.isArray(data)
+            ? data
+            : (Array.isArray(data.categorias) ? data.categorias : []);
+          setCategorias(categoriasArray);
+        } catch {
+          setCategorias([]);
+        }
+      };
+
+      fetchTarefa();
+      fetchCategorias();
+    }, [isAuthenticated, token, route.params.id_tarefa])
+  );
 
   const formatDateInput = (input: string) => {
-    const cleaned = input.replace(/\D/g, ''); // Remove non-numeric characters
+    const cleaned = input.replace(/\D/g, '');
     const match = cleaned.match(/^(\d{0,2})(\d{0,2})(\d{0,4})$/);
-
     if (!match) return input;
-
     const [, day, month, year] = match;
     let formatted = day;
     if (month) formatted += '/' + month;
     if (year) formatted += '/' + year;
-
     return formatted;
+  };
+
+  const formatDateToInput = (isoDate: string) => {
+    if (!isoDate) return '';
+    const d = new Date(isoDate);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const handleDataFimChange = (input: string) => {
@@ -47,60 +130,17 @@ export default function CriaTarefa() {
     setDataFim(formatted);
   };
 
-  // useEffect substituído por useFocusEffect para atualizar categorias ao voltar para a tela
-  useFocusEffect(
-    useCallback(() => {
-      // Só busca categorias se a tela estiver focada, autenticada e o token existir
-      if (!isFocused || !isAuthenticated || !token) {
-        return;
-      }
-      const fetchCategorias = async () => {
-        try {
-          console.log('Enviando token no header (categorias):', token);
-          let response = await fetch(`${IP_CELULAR}/api/categoria/list`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (response.status === 401) {
-            console.error('Erro 401 ao buscar categorias (token inválido ou expirado)');
-            return;
-          }
-          if (!response.ok) {
-            response = await fetch(`${IP_WIFI}/api/categorialist`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          }
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Erro ao buscar categorias:', response.status, errorText);
-            throw new Error('Erro ao buscar categorias');
-          }
-          const data = await response.json();
-          const categoriasArray = Array.isArray(data)
-            ? data
-            : (Array.isArray(data.categorias) ? data.categorias : []);
-          setCategorias(categoriasArray);
-          if (
-            categoriasArray.length > 0 &&
-            (categoriasSelecionadas.length === 0 || !categoriasArray.some((cat: { id_categoria: number }) => categoriasSelecionadas.includes(cat.id_categoria)))
-          ) {
-            setCategoriasSelecionadas([categoriasArray[0].id_categoria]);
-          }
-        } catch (error) {
-          console.error('Erro inesperado ao buscar categorias:', error);
-          setCategorias([]);
-        }
-      };
-      fetchCategorias();
-    }, [isFocused, isAuthenticated, token])
-  );
-
-  const handleCreateTask = async () => {
+  const handleUpdateTask = async () => {
     if (!isAuthenticated || !token) {
-      console.warn('Token ausente ou usuário não autenticado. Não será feita a requisição de criação de tarefa.');
+      Alert.alert('Erro', 'Usuário não autenticado.');
+      return;
+    }
+    if (!titulo.trim()) {
+      Alert.alert('Erro', 'O título é obrigatório.');
+      return;
+    }
+    if (categoriasSelecionadas.length === 0) {
+      Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
       return;
     }
     const validValues = ['baixa', 'media', 'alta'];
@@ -109,33 +149,21 @@ export default function CriaTarefa() {
       return;
     }
 
-    // Validação
-    if (categoriasSelecionadas.length === 0) {
-      Alert.alert('Erro', 'Selecione pelo menos uma categoria.');
-      return;
-    }
-
-    const data_inicio = getHorarioBrasiliaISO();
-    const status = 'pendente';
-
     let data_fim: string | null = null;
     if (isDataFimEnabled && dataFim) {
-      // Espera dataFim no formato dd/mm/aaaa
       const [dia, mes, ano] = dataFim.split('/');
       if (dia && mes && ano) {
-        // Cria objeto Date no fuso de Brasília
         const dateObj = new Date(Number(ano), Number(mes) - 1, Number(dia), 23, 59, 0);
-        // Ajusta para UTC-3
         dateObj.setHours(dateObj.getHours() - 3);
         data_fim = dateObj.toISOString();
       }
     }
 
     // Payload para múltiplas categorias
-    const novaTarefa: any = {
+    const tarefaAtualizada: any = {
       titulo,
       conteudo,
-      data_inicio,
+      data_inicio: dataInicio,
       data_fim,
       status,
       prioridade: prioridade as 'baixa' | 'media' | 'alta',
@@ -143,41 +171,24 @@ export default function CriaTarefa() {
     };
 
     try {
-      console.log('Enviando token no header (criar tarefa):', token);
-      const response = await fetch(`${IP_CELULAR}/api/tarefa`, {
-        method: 'POST',
+      const response = await fetch(`${IP_CELULAR}/api/tarefa/${route.params.id_tarefa}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(novaTarefa),
+        body: JSON.stringify(tarefaAtualizada),
       });
-
-      if (response.status === 401) {
-        console.error('Erro 401 ao criar tarefa (token inválido ou expirado)');
-        return;
-      }
 
       if (!response.ok) {
         const errorMessage = await response.text();
-        console.error('Erro ao criar tarefa:', response.status, errorMessage);
         throw new Error(errorMessage);
       }
 
-      Alert.alert('Sucesso', 'Tarefa criada com sucesso!');
-      setTitulo('');
-      setConteudo('');
-      setDataFim(null);
-      setIsDataFimEnabled(false);
-      setPrioridade('media');
-      setCategoria(null);
-      setCategoriasSelecionadas([]); // Limpa categorias selecionadas
-      // Redireciona para a tela principal após criar tarefa
-      navigation.navigate('TelaPrincipal');
+      Alert.alert('Sucesso', 'Tarefa atualizada com sucesso!');
+      navigation.goBack();
     } catch (error) {
-      console.error('Erro inesperado ao criar tarefa:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      Alert.alert('Erro', errorMessage);
+      Alert.alert('Erro', error instanceof Error ? error.message : 'Erro ao atualizar tarefa');
     }
   };
 
@@ -185,7 +196,7 @@ export default function CriaTarefa() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80} // AJUSTE PARA SUBIR O TECLADO
+      keyboardVerticalOffset={80}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
@@ -196,17 +207,17 @@ export default function CriaTarefa() {
           <Text style={styles.label}>Título</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite o título da tarefa"
             value={titulo}
             onChangeText={setTitulo}
+            placeholder="Digite o título da tarefa"
           />
 
           <Text style={styles.label}>Conteúdo</Text>
           <TextInput
             style={styles.textArea}
-            placeholder="Digite o conteúdo da tarefa"
             value={conteudo}
             onChangeText={setConteudo}
+            placeholder="Digite o conteúdo da tarefa"
             multiline={true}
             numberOfLines={4}
           />
@@ -249,7 +260,7 @@ export default function CriaTarefa() {
           </View>
 
           <Text style={styles.label}>Categorias</Text>
-          <View style={{ marginBottom: 30 }}>
+          <View style={{ marginBottom: 15 }}>
             {categorias.length > 0 ? (
               categorias.map((cat) => (
                 <TouchableOpacity
@@ -284,14 +295,9 @@ export default function CriaTarefa() {
             ) : (
               <Text style={{ color: '#8B4513' }}>Nenhuma categoria encontrada</Text>
             )}
-            <Button
-              title="Criar Categoria"
-              onPress={() => navigation.navigate('CriaCategoria')}
-              color="#8B4513"
-            />
           </View>
 
-          <Button title="Criar Tarefa" onPress={handleCreateTask} color="#8B4513" /> {/* Botão marrom */}
+          <Button title="Salvar Alterações" onPress={handleUpdateTask} color="#8B4513" />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -314,30 +320,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#8B4513', // Texto marrom escuro
+    color: '#8B4513',
   },
   input: {
     height: 40,
-    borderColor: '#8B4513', // Borda marrom
+    borderColor: '#8B4513',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
-    backgroundColor: '#fff', // Fundo branco
-    color: '#8B4513', // Texto marrom escuro
+    backgroundColor: '#fff',
+    color: '#8B4513',
     width: '100%',
     minWidth: 0,
   },
   textArea: {
-    borderColor: '#8B4513', // Borda marrom
+    borderColor: '#8B4513',
     borderWidth: 1,
     borderRadius: 5,
     marginBottom: 15,
     paddingHorizontal: 10,
     paddingVertical: 10,
-    backgroundColor: '#fff', // Fundo branco
+    backgroundColor: '#fff',
     textAlignVertical: 'top',
-    color: '#8B4513', // Texto marrom escuro
+    color: '#8B4513',
     width: '100%',
     minWidth: 0,
   },
@@ -349,44 +355,28 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 10,
     fontSize: 14,
-    color: '#000', // Texto preto
+    color: '#000',
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)', // Borda branca transparente
-    borderRadius: 5,
-    marginBottom: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fundo semi-transparente
-    width: '100%',
-    minWidth: 0,
-  },
-  picker: {
-    height: 60, // Aumenta a altura do Picker de categoria
-    color: '#8B4513',
-    width: '100%',
-    minWidth: 0,
-  },
-  // NOVOS ESTILOS PARA PRIORIDADE
   pickerContainerPriority: {
     borderWidth: 1,
     borderColor: '#8B4513',
     borderRadius: 5,
     marginBottom: 15,
     backgroundColor: '#fff',
-    minHeight: 60, // Aumenta a altura mínima para o select aparecer melhor
+    minHeight: 60,
     justifyContent: 'center',
     width: '100%',
     minWidth: 0,
   },
   pickerPriority: {
-    height: 60, // Aumenta a altura do Picker
+    height: 60,
     color: '#8B4513',
     fontSize: 12,
     width: '100%',
     minWidth: 0,
   },
   pickerItemPriority: {
-    fontSize: 12, // Diminui o tamanho da fonte dos itens
+    fontSize: 12,
     color: '#8B4513',
   },
   categoriaRow: {
@@ -404,7 +394,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     minWidth: 0,
-    minHeight: 60, // Aumenta a altura do campo de categoria
+    minHeight: 60,
     justifyContent: 'center',
   },
 });

@@ -10,6 +10,7 @@ import ListarCategoria from '@/components/categoria/ListarCategoria';
 import ListarTarefas from '@/components/tarefa/ListarTarefas';
 import CriaUsuario from '@/components/usuario/CriaUsuario';
 import EditaUsuario from '@/components/usuario/EditaUsuario';
+import EditaTarefa from '@/components/tarefa/EditaTarefa';
 import { AuthProvider } from '@/context/ApiContext'; // Importa o AuthProvider
 
 export type RootStackParamList = {
@@ -22,6 +23,7 @@ export type RootStackParamList = {
   ListarTarefas: undefined;
   CriaUsuario: undefined;
   EditaUsuario: undefined;
+  EditaTarefa: { id_tarefa: number };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -40,6 +42,7 @@ export default function AppRoutes() {
           <Stack.Screen name="ListarTarefas" component={ListarTarefas} />
           <Stack.Screen name="CriaUsuario" component={CriaUsuario} />
           <Stack.Screen name="EditaUsuario" component={EditaUsuario} />
+          <Stack.Screen name="EditaTarefa" component={EditaTarefa} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>
