@@ -2,9 +2,24 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/routes/Route'; // Corrigida a importação
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function HomePage() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { isEnglish } = useLanguage();
+  const translations = {
+    pt: {
+      login: 'Login',
+      cadastrar: 'Cadastrar',
+      bemVindo: 'Bem-vindo ao Noiton, seu app de tarefas!',
+    },
+    en: {
+      login: 'Login',
+      cadastrar: 'Register',
+      bemVindo: 'Welcome to Noiton, your task app!',
+    },
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   return (
     <View style={styles.container}>
@@ -14,17 +29,17 @@ export default function HomePage() {
           activeOpacity={0.7}
           onPress={() => navigation.navigate('Login')}
         >
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>{t.login}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('CriaUsuario')} // Direciona para CriaUsuario
+          onPress={() => navigation.navigate('CriaUsuario')}
         >
-          <Text style={styles.buttonText}>Cadastrar</Text>
+          <Text style={styles.buttonText}>{t.cadastrar}</Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.text}>Bem-vindo ao Noiton, seu app de tarefas!</Text>
+      <Text style={styles.text}>{t.bemVindo}</Text>
     </View>
   );
 }

@@ -12,6 +12,8 @@ import CriaUsuario from '@/components/usuario/CriaUsuario';
 import EditaUsuario from '@/components/usuario/EditaUsuario';
 import EditaTarefa from '@/components/tarefa/EditaTarefa';
 import { AuthProvider } from '@/context/ApiContext'; // Importa o AuthProvider
+import RotinasScreen from '@/components/rotina/RotinasScreen';
+import CriaRotina from '@/components/rotina/CriaRotina';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -24,6 +26,8 @@ export type RootStackParamList = {
   CriaUsuario: undefined;
   EditaUsuario: undefined;
   EditaTarefa: { id_tarefa: number };
+  RotinasScreen: undefined;
+  CriaRotina: { tarefaBase?: any } | undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -43,6 +47,8 @@ export default function AppRoutes() {
           <Stack.Screen name="CriaUsuario" component={CriaUsuario} />
           <Stack.Screen name="EditaUsuario" component={EditaUsuario} />
           <Stack.Screen name="EditaTarefa" component={EditaTarefa} />
+          <Stack.Screen name="RotinasScreen" component={RotinasScreen} />
+          <Stack.Screen name="CriaRotina" component={CriaRotina} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

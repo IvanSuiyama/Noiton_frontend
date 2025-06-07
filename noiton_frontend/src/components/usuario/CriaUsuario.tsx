@@ -5,14 +5,46 @@ import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CriaUsuario() {
+  const { isEnglish } = useLanguage();
   const [cpf, setCpf] = useState('');
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [telefone, setTelefone] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const translations = {
+    pt: {
+      title: 'Criar Usuário',
+      cpf: 'CPF',
+      nome: 'Nome',
+      email: 'E-mail',
+      senha: 'Senha',
+      telefone: 'Telefone',
+      criar: 'Criar Usuário',
+      placeholderNome: 'Digite o nome',
+      placeholderEmail: 'Digite o e-mail',
+      placeholderSenha: 'Digite a senha',
+      placeholderTelefone: 'Digite o telefone',
+    },
+    en: {
+      title: 'Create User',
+      cpf: 'CPF',
+      nome: 'Name',
+      email: 'Email',
+      senha: 'Password',
+      telefone: 'Phone',
+      criar: 'Create User',
+      placeholderNome: 'Enter name',
+      placeholderEmail: 'Enter email',
+      placeholderSenha: 'Enter password',
+      placeholderTelefone: 'Enter phone',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   const validarCPF = (cpf: string): boolean => {
     cpf = cpf.replace(/\D/g, ''); // Remove caracteres não numéricos
@@ -105,65 +137,56 @@ export default function CriaUsuario() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.container}>
-          <Text style={styles.label}>CPF</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o CPF"
-            value={cpf}
-            onChangeText={setCpf}
-            keyboardType="numeric"
-          />
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Text style={styles.label}>{t.title}</Text>
+        <Text style={styles.label}>{t.cpf}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.placeholderNome}
+          value={cpf}
+          onChangeText={setCpf}
+          keyboardType="numeric"
+        />
 
-          <Text style={styles.label}>Nome</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o nome"
-            value={nome}
-            onChangeText={setNome}
-          />
+        <Text style={styles.label}>{t.nome}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.placeholderNome}
+          value={nome}
+          onChangeText={setNome}
+        />
 
-          <Text style={styles.label}>E-mail</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o e-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+        <Text style={styles.label}>{t.email}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.placeholderEmail}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
 
-          <Text style={styles.label}>Senha</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite a senha"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry={true}
-          />
+        <Text style={styles.label}>{t.senha}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.placeholderSenha}
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry={true}
+        />
 
-          <Text style={styles.label}>Telefone</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o telefone"
-            value={telefone}
-            onChangeText={setTelefone}
-            keyboardType="phone-pad"
-          />
+        <Text style={styles.label}>{t.telefone}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.placeholderTelefone}
+          value={telefone}
+          onChangeText={setTelefone}
+          keyboardType="phone-pad"
+        />
 
-          <Button title="Cadastrar Usuário" onPress={handleCreateUser} color="#8B4513" /> {/* Botão marrom */}
-        </View>
+        <Button title={t.criar} onPress={handleCreateUser} color="#8B4513" />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

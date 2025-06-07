@@ -5,6 +5,7 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
 import { useAuth } from '@/context/ApiContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { IP_WIFI, IP_CELULAR } from '@env';
 
 type EditaTarefaRouteProp = {
@@ -17,6 +18,7 @@ export default function EditaTarefa() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute() as EditaTarefaRouteProp;
   const { token, isAuthenticated } = useAuth();
+  const { isEnglish } = useLanguage();
 
   const [titulo, setTitulo] = useState('');
   const [conteudo, setConteudo] = useState('');
@@ -29,6 +31,32 @@ export default function EditaTarefa() {
   const [categoria, setCategoria] = useState<number | null>(null);
   // Permitir múltiplas categorias
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<number[]>([]);
+
+  const translations = {
+    pt: {
+      title: 'Editar Tarefa',
+      titulo: 'Título',
+      conteudo: 'Conteúdo',
+      prazoFinal: 'Prazo Final',
+      prioridade: 'Prioridade',
+      categoria: 'Categoria',
+      salvar: 'Salvar',
+      status: 'Status',
+      inicio: 'Início',
+    },
+    en: {
+      title: 'Edit Task',
+      titulo: 'Title',
+      conteudo: 'Content',
+      prazoFinal: 'Due Date',
+      prioridade: 'Priority',
+      categoria: 'Category',
+      salvar: 'Save',
+      status: 'Status',
+      inicio: 'Start',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   // Carrega dados da tarefa e categorias ao entrar na tela
   useFocusEffect(
@@ -193,114 +221,105 @@ export default function EditaTarefa() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={80}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.container}>
-          <Text style={styles.label}>Título</Text>
-          <TextInput
-            style={styles.input}
-            value={titulo}
-            onChangeText={setTitulo}
-            placeholder="Digite o título da tarefa"
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Text style={styles.label}>{t.title}</Text>
+        <Text style={styles.label}>{t.titulo}</Text>
+        <TextInput
+          style={styles.input}
+          value={titulo}
+          onChangeText={setTitulo}
+          placeholder="Digite o título da tarefa"
+        />
+
+        <Text style={styles.label}>{t.conteudo}</Text>
+        <TextInput
+          style={styles.textArea}
+          value={conteudo}
+          onChangeText={setConteudo}
+          placeholder="Digite o conteúdo da tarefa"
+          multiline={true}
+          numberOfLines={4}
+        />
+
+        <View style={styles.dataFimContainer}>
+          <Switch
+            value={isDataFimEnabled}
+            onValueChange={setIsDataFimEnabled}
           />
-
-          <Text style={styles.label}>Conteúdo</Text>
-          <TextInput
-            style={styles.textArea}
-            value={conteudo}
-            onChangeText={setConteudo}
-            placeholder="Digite o conteúdo da tarefa"
-            multiline={true}
-            numberOfLines={4}
-          />
-
-          <View style={styles.dataFimContainer}>
-            <Switch
-              value={isDataFimEnabled}
-              onValueChange={setIsDataFimEnabled}
-            />
-            <Text style={styles.checkboxLabel}>
-              {isDataFimEnabled ? 'Definir prazo' : 'Sem prazo'}
-            </Text>
-          </View>
-
-          {isDataFimEnabled && (
-            <>
-              <Text style={styles.label}>Data de Fim</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="dd/mm/aaaa"
-                value={dataFim || ''}
-                onChangeText={handleDataFimChange}
-                keyboardType="numeric"
-              />
-            </>
-          )}
-
-          <Text style={styles.label}>Prioridade</Text>
-          <View style={styles.pickerContainerPriority}>
-            <Picker
-              selectedValue={prioridade}
-              onValueChange={(itemValue) => setPrioridade(itemValue)}
-              style={styles.pickerPriority}
-              itemStyle={styles.pickerItemPriority}
-            >
-              <Picker.Item label="Alta" value="alta" />
-              <Picker.Item label="Média" value="media" />
-              <Picker.Item label="Baixa" value="baixa" />
-            </Picker>
-          </View>
-
-          <Text style={styles.label}>Categorias</Text>
-          <View style={{ marginBottom: 15 }}>
-            {categorias.length > 0 ? (
-              categorias.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id_categoria}
-                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}
-                  onPress={() => {
-                    setCategoriasSelecionadas((prev) =>
-                      prev.includes(cat.id_categoria)
-                        ? prev.filter((id) => id !== cat.id_categoria)
-                        : [...prev, cat.id_categoria]
-                    );
-                  }}
-                >
-                  <View style={{
-                    width: 22,
-                    height: 22,
-                    borderWidth: 2,
-                    borderColor: '#8B4513',
-                    borderRadius: 4,
-                    marginRight: 8,
-                    backgroundColor: categoriasSelecionadas.includes(cat.id_categoria) ? '#8B4513' : '#fff',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
-                    {categoriasSelecionadas.includes(cat.id_categoria) && (
-                      <View style={{ width: 12, height: 12, backgroundColor: '#fff', borderRadius: 2 }} />
-                    )}
-                  </View>
-                  <Text style={{ color: '#8B4513', fontSize: 15 }}>{cat.nome}</Text>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text style={{ color: '#8B4513' }}>Nenhuma categoria encontrada</Text>
-            )}
-          </View>
-
-          <Button title="Salvar Alterações" onPress={handleUpdateTask} color="#8B4513" />
+          <Text style={styles.checkboxLabel}>
+            {isDataFimEnabled ? 'Definir prazo' : 'Sem prazo'}
+          </Text>
         </View>
+
+        {isDataFimEnabled && (
+          <>
+            <Text style={styles.label}>{t.prazoFinal}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="dd/mm/aaaa"
+              value={dataFim || ''}
+              onChangeText={handleDataFimChange}
+              keyboardType="numeric"
+            />
+          </>
+        )}
+
+        <Text style={styles.label}>{t.prioridade}</Text>
+        <View style={styles.pickerContainerPriority}>
+          <Picker
+            selectedValue={prioridade}
+            onValueChange={(itemValue) => setPrioridade(itemValue)}
+            style={styles.pickerPriority}
+            itemStyle={styles.pickerItemPriority}
+          >
+            <Picker.Item label="Alta" value="alta" />
+            <Picker.Item label="Média" value="media" />
+            <Picker.Item label="Baixa" value="baixa" />
+          </Picker>
+        </View>
+
+        <Text style={styles.label}>{t.categoria}</Text>
+        <View style={{ marginBottom: 15 }}>
+          {categorias.length > 0 ? (
+            categorias.map((cat) => (
+              <TouchableOpacity
+                key={cat.id_categoria}
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}
+                onPress={() => {
+                  setCategoriasSelecionadas((prev) =>
+                    prev.includes(cat.id_categoria)
+                      ? prev.filter((id) => id !== cat.id_categoria)
+                      : [...prev, cat.id_categoria]
+                  );
+                }}
+              >
+                <View style={{
+                  width: 22,
+                  height: 22,
+                  borderWidth: 2,
+                  borderColor: '#8B4513',
+                  borderRadius: 4,
+                  marginRight: 8,
+                  backgroundColor: categoriasSelecionadas.includes(cat.id_categoria) ? '#8B4513' : '#fff',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  {categoriasSelecionadas.includes(cat.id_categoria) && (
+                    <View style={{ width: 12, height: 12, backgroundColor: '#fff', borderRadius: 2 }} />
+                  )}
+                </View>
+                <Text style={{ color: '#8B4513', fontSize: 15 }}>{cat.nome}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={{ color: '#8B4513' }}>Nenhuma categoria encontrada</Text>
+          )}
+        </View>
+
+        <Button title={t.salvar} onPress={handleUpdateTask} color="#8B4513" />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

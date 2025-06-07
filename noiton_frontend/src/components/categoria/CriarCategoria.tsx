@@ -6,11 +6,29 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/routes/Route'; // Certifique-se que o caminho está correto
 import { useAuth } from '@/context/ApiContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CriaCategoria() {
+  const { isEnglish } = useLanguage();
   const [nome, setNome] = useState('');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // ADICIONADO
   const { token, isAuthenticated, logout } = useAuth();
+
+  const translations = {
+    pt: {
+      title: 'Criar Categoria',
+      nome: 'Nome',
+      criar: 'Criar Categoria',
+      placeholder: 'Digite o nome da categoria',
+    },
+    en: {
+      title: 'Create Category',
+      nome: 'Name',
+      criar: 'Create Category',
+      placeholder: 'Enter category name',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   const handleCreateCategory = async () => {
     if (!isAuthenticated || !token) {
@@ -60,23 +78,18 @@ export default function CriaCategoria() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.container}>
-          <Text style={styles.label}>Criar Categoria</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o nome da categoria"
-            value={nome}
-            onChangeText={setNome}
-          />
-          <Button title="Criar Categoria" onPress={handleCreateCategory} color="#8B4513" /> {/* Botão marrom */}
-        </View>
+        <Text style={styles.label}>{t.title}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.placeholder}
+          value={nome}
+          onChangeText={setNome}
+        />
+        <Button title={t.criar} onPress={handleCreateCategory} color="#8B4513" />
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

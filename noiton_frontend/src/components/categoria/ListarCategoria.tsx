@@ -6,11 +6,35 @@ import { useAuth } from '@/context/ApiContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ListarCategoria() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const { token, isAuthenticated, logout } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { isEnglish } = useLanguage();
+
+  const translations = {
+    pt: {
+      listaCategorias: 'Lista de Categorias',
+      id: 'ID',
+      nome: 'Nome',
+      excluir: 'Excluir',
+      sucessoExclusao: 'Categoria excluída com sucesso!',
+      erro: 'Erro',
+      nenhumaCategoria: 'Nenhuma categoria encontrada.',
+    },
+    en: {
+      listaCategorias: 'Category List',
+      id: 'ID',
+      nome: 'Name',
+      excluir: 'Delete',
+      sucessoExclusao: 'Category deleted successfully!',
+      erro: 'Error',
+      nenhumaCategoria: 'No categories found.',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -35,12 +59,12 @@ export default function ListarCategoria() {
         const data: Categoria[] = await response.json();
         setCategorias(data);
       } catch (error) {
-        Alert.alert('Erro', error instanceof Error ? error.message : 'Erro desconhecido');
+        Alert.alert(t.erro, error instanceof Error ? error.message : 'Erro desconhecido');
       }
     };
 
     fetchCategorias();
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, isEnglish]); // Adicione isEnglish para atualizar se trocar idioma
 
   const handleDelete = async (id: number) => {
     if (!token) {
@@ -69,29 +93,32 @@ export default function ListarCategoria() {
         throw new Error(errorMessage);
       }
 
-      Alert.alert('Sucesso', 'Categoria excluída com sucesso!');
+      Alert.alert('Sucesso', t.sucessoExclusao);
       setCategorias((prev) => prev.filter((categoria) => categoria.id_categoria !== id));
     } catch (error) {
-      Alert.alert('Erro', error instanceof Error ? error.message : 'Erro desconhecido');
+      Alert.alert(t.erro, error instanceof Error ? error.message : 'Erro desconhecido');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Lista de Categorias</Text>
+      <Text style={styles.label}>{t.listaCategorias}</Text>
       <FlatList
         data={categorias}
         keyExtractor={(item) => item.id_categoria.toString()}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>{t.nenhumaCategoria}</Text>
+        }
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <Text style={styles.itemText}>ID: {item.id_categoria}</Text>
-            <Text style={styles.itemText}>Nome: {item.nome}</Text>
+            <Text style={styles.itemText}>{t.id}: {item.id_categoria}</Text>
+            <Text style={styles.itemText}>{t.nome}: {item.nome}</Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleDelete(item.id_categoria)}
               >
-                <Text style={styles.deleteButtonText}>Excluir</Text>
+                <Text style={styles.deleteButtonText}>{t.excluir}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -144,5 +171,11 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff', // Texto branco
     fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#8B4513',
+    fontSize: 16,
+    marginTop: 16,
   },
 });

@@ -6,6 +6,7 @@ import { StackNavigationProp } from '@react-navigation/stack'; // Corrigir a imp
 import Usuario from '@/models/Usuario';
 import { IP_WIFI, IP_CELULAR } from '@env';
 import Logoff from './Logoff';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface PopUpUserProps {
   visible: boolean;
@@ -17,6 +18,31 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
   const [userData, setUserData] = useState<Usuario | null>(null);
   const [showLogoff, setShowLogoff] = useState(false);
   const navigation = useNavigation<StackNavigationProp<any>>();
+  const { isEnglish } = useLanguage();
+
+  const translations = {
+    pt: {
+      cpf: 'CPF',
+      nome: 'Nome',
+      email: 'E-mail',
+      telefone: 'Telefone',
+      editar: 'Editar',
+      carregando: 'Carregando dados do usuário...',
+      fechar: 'Fechar',
+      logoff: 'LogOff',
+    },
+    en: {
+      cpf: 'CPF',
+      nome: 'Name',
+      email: 'Email',
+      telefone: 'Phone',
+      editar: 'Edit',
+      carregando: 'Loading user data...',
+      fechar: 'Close',
+      logoff: 'LogOff',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   useEffect(() => {
     if (visible && userCpf) {
@@ -73,38 +99,38 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
           {userData ? (
             <>
               <View style={styles.fieldContainer}>
-                <Text style={styles.labelBold}>CPF: </Text>
+                <Text style={styles.labelBold}>{t.cpf}: </Text>
                 <Text style={styles.label}>{userData.cpf}</Text>
               </View>
               <View style={styles.fieldContainer}>
-                <Text style={styles.labelBold}>Nome: </Text>
+                <Text style={styles.labelBold}>{t.nome}: </Text>
                 <Text style={styles.label}>{userData.nome}</Text>
               </View>
               <View style={styles.fieldContainer}>
-                <Text style={styles.labelBold}>Email: </Text>
+                <Text style={styles.labelBold}>{t.email}: </Text>
                 <Text style={styles.label}>{userData.email}</Text>
               </View>
               <View style={styles.fieldContainer}>
-                <Text style={styles.labelBold}>Telefone: </Text>
+                <Text style={styles.labelBold}>{t.telefone}: </Text>
                 <Text style={styles.label}>{userData.telefone}</Text>
               </View>
               <View style={styles.buttonContainer}>
                 <Button
-                  title="Editar"
+                  title={t.editar}
                   onPress={() => navigation.navigate('EditaUsuario')}
                   color="#8B4513"
                 />
               </View>
             </>
           ) : (
-            <Text>Carregando dados do usuário...</Text>
+            <Text>{t.carregando}</Text>
           )}
           <View style={styles.buttonContainer}>
-            <Button title="Fechar" onPress={onClose} color="#8B4513" />
+            <Button title={t.fechar} onPress={onClose} color="#8B4513" />
           </View>
           <View style={styles.buttonContainer}>
             <Button
-              title="LogOff"
+              title={t.logoff}
               color="#B22222"
               onPress={() => setShowLogoff(true)}
             />

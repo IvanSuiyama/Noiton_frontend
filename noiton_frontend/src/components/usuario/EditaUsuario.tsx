@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useUserContext } from '@/context/UserContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
 import { useNavigation, CommonActions } from '@react-navigation/native'; // Import navigation hook and CommonActions
 
 export default function EditaUsuario() {
   const { userCpf } = useUserContext(); // Obtém o CPF do contexto
+  const { isEnglish } = useLanguage();
   const navigation = useNavigation(); // Initialize navigation
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -88,52 +90,79 @@ export default function EditaUsuario() {
     }
   };
 
+  const translations = {
+    pt: {
+      title: 'Editar Usuário',
+      cpf: 'CPF',
+      nome: 'Nome',
+      email: 'E-mail',
+      telefone: 'Telefone',
+      senha: 'Senha',
+      salvar: 'Salvar',
+    },
+    en: {
+      title: 'Edit User',
+      cpf: 'CPF',
+      nome: 'Name',
+      email: 'Email',
+      telefone: 'Phone',
+      senha: 'Password',
+      salvar: 'Save',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.container}>
-          <Text style={styles.label}>CPF</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: '#e0e0e0' }]} // Campo readonly com fundo cinza
-            value={userCpf || ''}
-            editable={false} // CPF é somente leitura
-          />
+        <Text style={styles.label}>{t.title}</Text>
+        <Text style={styles.label}>{t.cpf}</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: '#e0e0e0' }]} // Campo readonly com fundo cinza
+          value={userCpf || ''}
+          editable={false} // CPF é somente leitura
+        />
 
-          <Text style={styles.label}>Nome</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o nome"
-            value={nome}
-            onChangeText={setNome}
-          />
+        <Text style={styles.label}>{t.nome}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite o nome"
+          value={nome}
+          onChangeText={setNome}
+        />
 
-          <Text style={styles.label}>E-mail</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o e-mail"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+        <Text style={styles.label}>{t.email}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite o e-mail"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
 
-          <Text style={styles.label}>Telefone</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o telefone"
-            value={telefone}
-            onChangeText={setTelefone}
-            keyboardType="phone-pad"
-          />
+        <Text style={styles.label}>{t.telefone}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite o telefone"
+          value={telefone}
+          onChangeText={setTelefone}
+          keyboardType="phone-pad"
+        />
 
-          <View style={styles.buttonContainer}>
-            <Button title="Atualizar Usuário" onPress={handleUpdateUser} color="#8B4513" /> {/* Botão marrom */}
-          </View>
+        <Text style={styles.label}>{t.senha}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite a senha"
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry
+        />
+
+        <View style={styles.buttonContainer}>
+          <Button title={t.salvar} onPress={handleUpdateUser} color="#8B4513" /> {/* Botão marrom */}
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

@@ -7,6 +7,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useLanguage } from '@/context/LanguageContext';
 
 // Habilita animação no Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -228,8 +229,53 @@ export default function ListarTarefas() {
     tarefasOrdenadas.sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime());
   }
 
+  const { isEnglish } = useLanguage();
+  const translations = {
+    pt: {
+      palavraChave: 'Buscar por palavra-chave...',
+      categoria: 'Categoria',
+      prioridade: 'Prioridade',
+      status: 'Status',
+      ordenarPor: 'Ordenar por',
+      prazoFinal: 'Prazo Final',
+      limpar: 'Limpar',
+      semPrazo: 'Sem Prazo',
+      dataCriacao: 'Data Criação',
+      prazo: 'Prazo Final',
+      maisRecentes: 'Mais Recentes',
+      maisAntigas: 'Mais Antigas',
+      editar: 'Editar',
+      excluir: 'Excluir',
+      nenhumaTarefa: 'Nenhuma tarefa encontrada.',
+      conteudo: 'Conteúdo',
+      inicio: 'Início',
+      fim: 'Fim',
+    },
+    en: {
+      palavraChave: 'Search by keyword...',
+      categoria: 'Category',
+      prioridade: 'Priority',
+      status: 'Status',
+      ordenarPor: 'Sort by',
+      prazoFinal: 'Due Date',
+      limpar: 'Clear',
+      semPrazo: 'No Due Date',
+      dataCriacao: 'Creation Date',
+      prazo: 'Due Date',
+      maisRecentes: 'Most Recent',
+      maisAntigas: 'Oldest',
+      editar: 'Edit',
+      excluir: 'Delete',
+      nenhumaTarefa: 'No tasks found.',
+      conteudo: 'Content',
+      inicio: 'Start',
+      fim: 'End',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
+
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <View style={styles.container}>
       <FiltrosTarefa
         filtros={filtros}
         setFiltros={setFiltros}
@@ -237,13 +283,14 @@ export default function ListarTarefas() {
         onPesquisar={() => {}}
         prioridades={prioridades}
         statusList={statusList}
+        t={t}
       />
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {tarefasOrdenadas.length === 0 ? (
-          <Text style={styles.emptyText}>Nenhuma tarefa encontrada.</Text>
+          <Text style={styles.emptyText}>{t.nenhumaTarefa}</Text>
         ) : (
           tarefasOrdenadas.map((item) => (
-            <View key={item.id_tarefa} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}>
+            <View key={item.id_tarefa} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}> 
               <TouchableOpacity
                 style={styles.cardHeader}
                 onPress={() => handleExpand(item.id_tarefa)}
@@ -252,7 +299,7 @@ export default function ListarTarefas() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>{item.titulo}</Text>
                   <Text style={styles.cardCategoriasDestacada}>
-                    Categorias: {getCategoriasNomes(item.categorias)}
+                    {t.categoria}: {getCategoriasNomes(item.categorias)}
                   </Text>
                 </View>
                 {/* Checkbox para marcar como concluída, alinhado à direita antes do expandIcon */}
@@ -260,7 +307,7 @@ export default function ListarTarefas() {
                   style={[
                     styles.checkboxSquare,
                     item.status === 'concluido' && styles.checkboxSquareChecked,
-                    { marginRight: 24 } // aumenta o espaçamento do checkbox para o botão de +
+                    { marginRight: 24 }
                   ]}
                   onPress={(e) => {
                     e.stopPropagation && e.stopPropagation();
@@ -274,23 +321,22 @@ export default function ListarTarefas() {
               </TouchableOpacity>
               {expanded === item.id_tarefa && (
                 <View style={styles.cardContent}>
-                  <Text style={styles.itemText}>Conteúdo: {item.conteudo}</Text>
-                  <Text style={styles.itemText}>Status: {item.status}</Text>
-                  <Text style={styles.itemText}>Prioridade: {item.prioridade}</Text>
-                  <Text style={styles.itemText}>Início: {formatDate(typeof item.data_inicio === 'string' ? item.data_inicio : item.data_inicio?.toString() ?? '')}</Text>
-                  <Text style={styles.itemText}>Fim: {formatDate(typeof item.data_fim === 'string' ? item.data_fim : item.data_fim?.toString() ?? '')}</Text>
+                  <Text style={styles.itemText}>{t.conteudo}: {item.conteudo}</Text>
+                  <Text style={styles.itemText}>{t.status}: {item.status}</Text>
+                  <Text style={styles.itemText}>{t.prioridade}: {item.prioridade}</Text>
+                  <Text style={styles.itemText}>{t.inicio}: {formatDate(typeof item.data_inicio === 'string' ? item.data_inicio : item.data_inicio?.toString() ?? '')}</Text>
+                  <Text style={styles.itemText}>{t.fim}: {formatDate(typeof item.data_fim === 'string' ? item.data_fim : item.data_fim?.toString() ?? '')}</Text>
                   <View style={styles.buttonContainer}>
                     <TouchableOpacity
                       style={[styles.deleteButton, { marginRight: 10 }]}
-                      onPress={() => navigation.navigate('EditaTarefa', { id_tarefa: item.id_tarefa })}
-                    >
-                      <Text style={styles.deleteButtonText}>Editar</Text>
+                      onPress={() => navigation.navigate('EditaTarefa', { id_tarefa: item.id_tarefa })}>
+                      <Text style={styles.deleteButtonText}>{t.editar}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.deleteButton}
                       onPress={() => handleDelete(item.id_tarefa)}
                     >
-                      <Text style={styles.deleteButtonText}>Excluir</Text>
+                      <Text style={styles.deleteButtonText}>{t.excluir}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -298,13 +344,13 @@ export default function ListarTarefas() {
             </View>
           ))
         )}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 function FiltrosTarefa({
-  filtros, setFiltros, categorias, onPesquisar, prioridades, statusList
+  filtros, setFiltros, categorias, onPesquisar, prioridades, statusList, t
 }: {
   filtros: any,
   setFiltros: (f: any) => void,
@@ -312,6 +358,7 @@ function FiltrosTarefa({
   onPesquisar: () => void,
   prioridades: string[],
   statusList: string[],
+  t: any,
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [openFilters, setOpenFilters] = useState<{ [key: string]: boolean }>({});
@@ -325,7 +372,7 @@ function FiltrosTarefa({
       <View style={styles.filtrosBarRow}>
         <TextInput
           style={styles.filtroInput}
-          placeholder="Buscar por palavra-chave..."
+          placeholder={t.palavraChave}
           value={filtros.palavraChave}
           onChangeText={text => setFiltros({ ...filtros, palavraChave: text })}
           returnKeyType="search"
@@ -349,7 +396,7 @@ function FiltrosTarefa({
         <View style={styles.filtrosAvancadosContainer}>
           {/* Categoria */}
           <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('categoria')}>
-            <Text style={styles.filtroLabelGrande}>Categoria</Text>
+            <Text style={styles.filtroLabelGrande}>{t.categoria}</Text>
             <MaterialIcons name={openFilters['categoria'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['categoria'] && (
@@ -358,7 +405,7 @@ function FiltrosTarefa({
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                   {categorias.map(cat => (
                     <TouchableOpacity
-                      key={cat.id_categoria}
+                      key={`cat_${cat.id_categoria}`} // <-- Garante chave única
                       style={[
                         styles.filtroChipMini,
                         filtros.categoria === cat.id_categoria && styles.filtroChipSelecionadoMini
@@ -377,14 +424,14 @@ function FiltrosTarefa({
           )}
           {/* Prioridade */}
           <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('prioridade')}>
-            <Text style={styles.filtroLabelGrande}>Prioridade</Text>
+            <Text style={styles.filtroLabelGrande}>{t.prioridade}</Text>
             <MaterialIcons name={openFilters['prioridade'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['prioridade'] && (
             <View style={styles.filtroOpcoesLinha}>
               {prioridades.map(pri => (
                 <TouchableOpacity
-                  key={pri}
+                  key={`pri_${pri}`} // <-- Garante chave única
                   style={[
                     styles.filtroChipMini,
                     filtros.prioridade === pri && styles.filtroChipSelecionadoMini
@@ -401,14 +448,14 @@ function FiltrosTarefa({
           )}
           {/* Status */}
           <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('status')}>
-            <Text style={styles.filtroLabelGrande}>Status</Text>
+            <Text style={styles.filtroLabelGrande}>{t.status}</Text>
             <MaterialIcons name={openFilters['status'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['status'] && (
             <View style={styles.filtroOpcoesLinha}>
               {statusList.map(st => (
                 <TouchableOpacity
-                  key={st}
+                  key={`status_${st}`} // <-- Garante chave única
                   style={[
                     styles.filtroChipMini,
                     filtros.status === st && styles.filtroChipSelecionadoMini
@@ -425,14 +472,14 @@ function FiltrosTarefa({
           )}
           {/* Ordenar por */}
           <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('ordenarPor')}>
-            <Text style={styles.filtroLabelGrande}>Ordenar por</Text>
+            <Text style={styles.filtroLabelGrande}>{t.ordenarPor}</Text>
             <MaterialIcons name={openFilters['ordenarPor'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['ordenarPor'] && (
             <View style={styles.filtroOpcoesLinha}>
               {['data_inicio', 'data_fim', 'mais_recentes', 'mais_antigas'].map(ord => (
                 <TouchableOpacity
-                  key={ord}
+                  key={`ord_${ord}`} // <-- Garante chave única
                   style={[
                     styles.filtroChipMini,
                     filtros.ordenarPor === ord && styles.filtroChipSelecionadoMini
@@ -443,10 +490,10 @@ function FiltrosTarefa({
                     styles.filtroChipTextGrande,
                     filtros.ordenarPor === ord && { color: '#fff' }
                   ]}>
-                    {ord === 'data_inicio' ? 'Data Criação' :
-                      ord === 'data_fim' ? 'Prazo Final' :
-                        ord === 'mais_recentes' ? 'Mais Recentes' :
-                          'Mais Antigas'}
+                    {ord === 'data_inicio' ? t.dataCriacao :
+                      ord === 'data_fim' ? t.prazo :
+                        ord === 'mais_recentes' ? t.maisRecentes :
+                          t.maisAntigas}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -454,7 +501,7 @@ function FiltrosTarefa({
           )}
           {/* Prazo Final */}
           <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('prazoFinal')}>
-            <Text style={styles.filtroLabelGrande}>Prazo Final</Text>
+            <Text style={styles.filtroLabelGrande}>{t.prazoFinal}</Text>
             <MaterialIcons name={openFilters['prazoFinal'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['prazoFinal'] && (
@@ -472,7 +519,7 @@ function FiltrosTarefa({
                   style={[styles.filtroChipMini, { backgroundColor: '#ffe6e6', borderColor: '#8B4513' }]}
                   onPress={() => setFiltros({ ...filtros, prazoFinal: null })}
                 >
-                  <Text style={styles.filtroChipTextGrande}>Limpar</Text>
+                  <Text style={styles.filtroChipTextGrande}>{t.limpar}</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -482,7 +529,7 @@ function FiltrosTarefa({
                 <Text style={[
                   styles.filtroChipTextGrande,
                   filtros.semPrazo && { color: '#fff' }
-                ]}>Sem Prazo</Text>
+                ]}>{t.semPrazo}</Text>
               </TouchableOpacity>
             </View>
           )}

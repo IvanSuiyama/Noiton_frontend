@@ -6,6 +6,7 @@ import type { RootStackParamList } from '@/routes/Route'; // Importação do tip
 import { IP_WIFI, IP_CELULAR } from '@env'; // Importa a variável do .env
 import { useUserContext } from '@/context/UserContext'; // Import the UserContext
 import { useAuth } from '@/context/ApiContext'; // Importa o AuthContext
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,6 +14,32 @@ export default function Login() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // Remova o segundo parâmetro
   const { setUserCpf } = useUserContext(); // Access the context function to set CPF
   const { setToken } = useAuth(); // Pegue o setToken do contexto de autenticação
+  const { isEnglish } = useLanguage();
+  const translations = {
+    pt: {
+      login: 'Login',
+      email: 'Digite seu email',
+      senha: 'Digite sua senha',
+      entrar: 'Entrar',
+      sucesso: 'Login bem-sucedido',
+      bemVindo: 'Bem-vindo!',
+      erroLogin: 'Erro no login',
+      erroDesconhecido: 'Erro desconhecido',
+      dadosIncompletos: 'Dados incompletos retornados do servidor.',
+    },
+    en: {
+      login: 'Login',
+      email: 'Enter your email',
+      senha: 'Enter your password',
+      entrar: 'Sign In',
+      sucesso: 'Login successful',
+      bemVindo: 'Welcome!',
+      erroLogin: 'Login error',
+      erroDesconhecido: 'Unknown error',
+      dadosIncompletos: 'Incomplete data returned from server.',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   const handleLogin = async () => {
     try {
@@ -44,16 +71,16 @@ export default function Login() {
         console.log('CPF recebido:', data.cpf); // Log para depuração
         setUserCpf(data.cpf); // Armazena o CPF no contexto
         setToken(data.token); // Salve o token no contexto de autenticação
-        Alert.alert('Login bem-sucedido', 'Bem-vindo!');
+        Alert.alert(t.sucesso, t.bemVindo);
         navigation.navigate('TelaPrincipal'); // Redireciona para TelaPrincipal
       } else {
         console.error('CPF ou token ausente na resposta do servidor.');
-        Alert.alert('Erro no login', 'Dados incompletos retornados do servidor.');
+        Alert.alert(t.erroLogin, t.dadosIncompletos);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const errorMessage = error instanceof Error ? error.message : t.erroDesconhecido;
       console.error('Erro no login:', errorMessage);
-      Alert.alert('Erro no login', errorMessage);
+      Alert.alert(t.erroLogin, errorMessage);
     }
   };
 
@@ -69,10 +96,10 @@ export default function Login() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          <Text style={styles.title}>Login</Text>
+          <Text style={styles.title}>{t.login}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite seu email"
+            placeholder={t.email}
             placeholderTextColor="#000"
             keyboardType="email-address"
             value={email}
@@ -80,14 +107,14 @@ export default function Login() {
           />
           <TextInput
             style={styles.input}
-            placeholder="Digite sua senha"
+            placeholder={t.senha}
             placeholderTextColor="#000"
             secureTextEntry={true} // Oculta o texto com asteriscos
             value={password}
             onChangeText={setPassword}
           />
           <View style={styles.buttonContainer}>
-            <Button title="Entrar" onPress={handleLogin} color="#8B4513" /> {/* Botão marrom */}
+            <Button title={t.entrar} onPress={handleLogin} color="#8B4513" /> {/* Botão marrom */}
           </View>
         </View>
       </ScrollView>

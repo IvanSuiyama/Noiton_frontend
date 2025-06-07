@@ -4,21 +4,50 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '@/routes/Route';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function HamburgerMenu() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null); // Controla o menu expandido
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { isEnglish } = useLanguage();
+  const translations = {
+    pt: {
+      tarefas: 'Tarefas',
+      criarTarefa: 'Criar Tarefa',
+      listarTarefa: 'Listar Tarefa',
+      categorias: 'Categorias',
+      listarCategoria: 'Listar Categoria',
+      notificacoes: 'Notificações',
+      rotinas: 'Rotinas',
+      listarRotinas: 'Listar Rotinas',
+      criarRotina: 'Criar Rotina',
+    },
+    en: {
+      tarefas: 'Tasks',
+      criarTarefa: 'Create Task',
+      listarTarefa: 'List Tasks',
+      categorias: 'Categories',
+      listarCategoria: 'List Categories',
+      notificacoes: 'Notifications',
+      rotinas: 'Routines',
+      listarRotinas: 'List Routines',
+      criarRotina: 'Create Routine',
+    }
+  };
+  const t = isEnglish ? translations.en : translations.pt;
 
   const toggleMenu = () => {
     setMenuVisible(!menuVisible);
   };
 
   const handleMenuItemPress = (item: string) => {
-    if (item === 'Tarefas') {
-      setExpandedMenu(expandedMenu === 'Tarefas' ? null : 'Tarefas'); // Expande ou recolhe o menu
-    } else if (item === 'Categorias') {
-      setExpandedMenu(expandedMenu === 'Categorias' ? null : 'Categorias'); // Expande ou recolhe o menu
+    if (item === t.tarefas) {
+      setExpandedMenu(expandedMenu === t.tarefas ? null : t.tarefas); // Expande ou recolhe o menu
+    } else if (item === t.categorias) {
+      setExpandedMenu(expandedMenu === t.categorias ? null : t.categorias); // Expande ou recolhe o menu
+    } else if (item === t.rotinas) {
+      setExpandedMenu(expandedMenu === t.rotinas ? null : t.rotinas); // Expande ou recolhe o menu de rotinas
     } else {
       setMenuVisible(false); // Fecha o menu ao clicar em outros itens
     }
@@ -27,14 +56,20 @@ export default function HamburgerMenu() {
   const handleSubMenuItemPress = (subItem: string) => {
     console.log(`Navegando para: ${subItem}`); // Log para depuração
     setMenuVisible(false); // Fecha o menu ao clicar em um subtítulo
-    if (subItem === 'Criar Tarefa') {
+    if (subItem === t.criarTarefa) {
       navigation.navigate('CriaTarefa'); // Navega para CriaTarefa
     }
-    if (subItem === 'Listar Tarefa') {
+    if (subItem === t.listarTarefa) {
       navigation.navigate('ListarTarefas'); // Navega para ListarTarefas
     }
-    if (subItem === 'Listar Categoria') {
+    if (subItem === t.listarCategoria) {
       navigation.navigate('ListarCategoria'); // Navega para ListarCategoria
+    }
+    if (subItem === t.listarRotinas) {
+      navigation.navigate('RotinasScreen');
+    }
+    if (subItem === t.criarRotina) {
+      navigation.navigate('CriaRotina');
     }
   };
 
@@ -55,23 +90,23 @@ export default function HamburgerMenu() {
             {/* Tarefas com subtítulos */}
             <TouchableOpacity
               style={styles.menuItemTouchable}
-              onPress={() => handleMenuItemPress('Tarefas')}
+              onPress={() => handleMenuItemPress(t.tarefas)}
             >
-              <Text style={styles.menuItem}>Tarefas</Text>
+              <Text style={styles.menuItem}>{t.tarefas}</Text>
             </TouchableOpacity>
-            {expandedMenu === 'Tarefas' && (
+            {expandedMenu === t.tarefas && (
               <View style={styles.subMenu}>
                 <TouchableOpacity
                   style={styles.subMenuItemTouchable}
-                  onPress={() => handleSubMenuItemPress('Criar Tarefa')}
+                  onPress={() => handleSubMenuItemPress(t.criarTarefa)}
                 >
-                  <Text style={styles.subMenuItem}>Criar Tarefa</Text>
+                  <Text style={styles.subMenuItem}>{t.criarTarefa}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.subMenuItemTouchable}
-                  onPress={() => handleSubMenuItemPress('Listar Tarefa')}
+                  onPress={() => handleSubMenuItemPress(t.listarTarefa)}
                 >
-                  <Text style={styles.subMenuItem}>Listar Tarefa</Text>
+                  <Text style={styles.subMenuItem}>{t.listarTarefa}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -79,17 +114,41 @@ export default function HamburgerMenu() {
             {/* Categorias com subtítulos */}
             <TouchableOpacity
               style={styles.menuItemTouchable}
-              onPress={() => handleMenuItemPress('Categorias')}
+              onPress={() => handleMenuItemPress(t.categorias)}
             >
-              <Text style={styles.menuItem}>Categorias</Text>
+              <Text style={styles.menuItem}>{t.categorias}</Text>
             </TouchableOpacity>
-            {expandedMenu === 'Categorias' && (
+            {expandedMenu === t.categorias && (
               <View style={styles.subMenu}>
                 <TouchableOpacity
                   style={styles.subMenuItemTouchable}
-                  onPress={() => handleSubMenuItemPress('Listar Categoria')}
+                  onPress={() => handleSubMenuItemPress(t.listarCategoria)}
                 >
-                  <Text style={styles.subMenuItem}>Listar Categoria</Text>
+                  <Text style={styles.subMenuItem}>{t.listarCategoria}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Rotinas com subtítulos */}
+            <TouchableOpacity
+              style={styles.menuItemTouchable}
+              onPress={() => handleMenuItemPress(t.rotinas)}
+            >
+              <Text style={styles.menuItem}>{t.rotinas}</Text>
+            </TouchableOpacity>
+            {expandedMenu === t.rotinas && (
+              <View style={styles.subMenu}>
+                <TouchableOpacity
+                  style={styles.subMenuItemTouchable}
+                  onPress={() => handleSubMenuItemPress(t.listarRotinas)}
+                >
+                  <Text style={styles.subMenuItem}>{t.listarRotinas}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.subMenuItemTouchable}
+                  onPress={() => handleSubMenuItemPress(t.criarRotina)}
+                >
+                  <Text style={styles.subMenuItem}>{t.criarRotina}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -97,9 +156,9 @@ export default function HamburgerMenu() {
             {/* Notificações */}
             <TouchableOpacity
               style={styles.menuItemTouchable}
-              onPress={() => handleMenuItemPress('Notificações')}
+              onPress={() => handleMenuItemPress(t.notificacoes)}
             >
-              <Text style={styles.menuItem}>Notificações</Text>
+              <Text style={styles.menuItem}>{t.notificacoes}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
