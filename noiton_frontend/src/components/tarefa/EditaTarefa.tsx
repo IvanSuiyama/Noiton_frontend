@@ -7,12 +7,19 @@ import type { RootStackParamList } from '@/routes/Route';
 import { useAuth } from '@/context/ApiContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { IP_WIFI, IP_CELULAR } from '@env';
+import * as Calendar from 'expo-calendar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type EditaTarefaRouteProp = {
   params: {
     id_tarefa: number;
   };
 };
+
+// Removido o Header
+const Footer = () => (
+  <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+);
 
 export default function EditaTarefa() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -31,6 +38,7 @@ export default function EditaTarefa() {
   const [categoria, setCategoria] = useState<number | null>(null);
   // Permitir múltiplas categorias
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<number[]>([]);
+  const [eventId, setEventId] = useState<string | null>(null);
 
   const translations = {
     pt: {
@@ -101,6 +109,7 @@ export default function EditaTarefa() {
             setIsDataFimEnabled(false);
             setDataFim(null);
           }
+          setEventId(tarefa.eventId || null); // Supondo que o eventId esteja vindo na tarefa
         } catch (error) {
           console.error('Erro ao carregar tarefa:', error);
           Alert.alert('Erro', error instanceof Error ? error.message : 'Erro ao carregar tarefa');
@@ -158,6 +167,26 @@ export default function EditaTarefa() {
     setDataFim(formatted);
   };
 
+  // Função para remover evento do calendário
+  const removerEventoCalendario = async (eventId: string) => {
+    try {
+      await Calendar.deleteEventAsync(eventId);
+      console.log('Evento do calendário removido (EditaTarefa):', eventId);
+    } catch (error) {
+      console.error('Erro ao remover evento do calendário (EditaTarefa):', error);
+    }
+  };
+
+  // Função para salvar eventId no AsyncStorage
+  const saveEventId = async (tarefaId: number, eventId: string) => {
+    try {
+      await AsyncStorage.setItem(`eventId_${tarefaId}`, eventId);
+      console.log('eventId salvo no AsyncStorage (EditaTarefa):', eventId, 'para tarefa', tarefaId);
+    } catch (e) {
+      console.error('Erro ao salvar eventId no AsyncStorage (EditaTarefa):', e);
+    }
+  };
+
   const handleUpdateTask = async () => {
     if (!isAuthenticated || !token) {
       Alert.alert('Erro', 'Usuário não autenticado.');
@@ -187,6 +216,62 @@ export default function EditaTarefa() {
       }
     }
 
+    // Antes de atualizar, verifica se mudou a data_fim e há eventId: remove evento antigo e cria novo
+    let novoEventId = eventId;
+    if (isDataFimEnabled && dataFim) {
+      const [dia, mes, ano] = dataFim.split('/');
+      if (dia && mes && ano) {
+        const novaData = new Date(Number(ano), Number(mes) - 1, Number(dia), 23, 59, 0);
+        novaData.setHours(novaData.getHours() - 3);
+        const novaDataISO = novaData.toISOString();
+        // Se não há eventId, cria novo evento
+        if (!eventId) {
+          const eventStart = new Date(novaDataISO);
+          eventStart.setHours(0, 0, 0, 0);
+          const eventEnd = new Date(novaDataISO);
+          eventEnd.setHours(23, 59, 59, 999);
+          const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+          const googleCalendar = calendars.find(cal => cal.accessLevel === Calendar.CalendarAccessLevel.OWNER && cal.source && cal.source.type === 'com.google');
+          if (googleCalendar) {
+            novoEventId = await Calendar.createEventAsync(googleCalendar.id, {
+              title: `Tarefa: ${titulo}`,
+              startDate: eventStart,
+              endDate: eventEnd,
+              timeZone: 'America/Sao_Paulo',
+              allDay: true,
+              alarms: [{ relativeOffset: -60 }],
+            });
+            console.log('Novo eventId criado ao editar tarefa (sem antigo):', novoEventId);
+          } else {
+            console.error('Google Calendar não encontrado ao editar tarefa.');
+          }
+        } else if (data_fim !== dataInicio) {
+          // Se já existe eventId e a data mudou, remove o antigo e cria novo
+          await removerEventoCalendario(eventId);
+          const eventStart = new Date(novaDataISO);
+          eventStart.setHours(0, 0, 0, 0);
+          const eventEnd = new Date(novaDataISO);
+          eventEnd.setHours(23, 59, 59, 999);
+          const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+          const googleCalendar = calendars.find(cal => cal.accessLevel === Calendar.CalendarAccessLevel.OWNER && cal.source && cal.source.type === 'com.google');
+          if (googleCalendar) {
+            novoEventId = await Calendar.createEventAsync(googleCalendar.id, {
+              title: `Tarefa: ${titulo}`,
+              startDate: eventStart,
+              endDate: eventEnd,
+              timeZone: 'America/Sao_Paulo',
+              allDay: true,
+              alarms: [{ relativeOffset: -60 }],
+            });
+            console.log('Novo eventId criado ao editar tarefa (trocando data):', novoEventId);
+          } else {
+            console.error('Google Calendar não encontrado ao editar tarefa.');
+          }
+        }
+      }
+    }
+    console.log('eventId antes do update:', eventId, 'novoEventId:', novoEventId);
+
     // Payload para múltiplas categorias
     const tarefaAtualizada: any = {
       titulo,
@@ -196,6 +281,7 @@ export default function EditaTarefa() {
       status,
       prioridade: prioridade as 'baixa' | 'media' | 'alta',
       categorias: categoriasSelecionadas.map(id => ({ id_categoria: id })),
+      eventId: novoEventId,
     };
 
     try {
@@ -213,6 +299,17 @@ export default function EditaTarefa() {
         throw new Error(errorMessage);
       }
 
+      // Se houver novoEventId, salva no AsyncStorage
+      if (route.params.id_tarefa && novoEventId) {
+        await saveEventId(route.params.id_tarefa, novoEventId);
+      }
+
+      // Se status for concluído e houver eventId, remove o evento do calendário
+      if (status === 'concluido' && eventId) {
+        await removerEventoCalendario(eventId);
+        Alert.alert('Tarefa concluída!', 'O evento do calendário foi removido.');
+      }
+
       Alert.alert('Sucesso', 'Tarefa atualizada com sucesso!');
       navigation.goBack();
     } catch (error) {
@@ -221,8 +318,9 @@ export default function EditaTarefa() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      {/* Header removido */}
+      <ScrollView contentContainerStyle={styles.scrollContainer} style={{ flex: 1 }}>
         <Text style={styles.label}>{t.title}</Text>
         <Text style={styles.label}>{t.titulo}</Text>
         <TextInput
@@ -332,6 +430,7 @@ export default function EditaTarefa() {
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.salvar}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <Footer />
     </View>
   );
 }

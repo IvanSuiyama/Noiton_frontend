@@ -5,6 +5,10 @@ import { useLanguage } from '@/context/LanguageContext';
 import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
 import { useNavigation, CommonActions } from '@react-navigation/native'; // Import navigation hook and CommonActions
 
+const Footer = () => (
+  <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+);
+
 export default function EditaUsuario() {
   const { userCpf } = useUserContext(); // Obtém o CPF do contexto
   const { isEnglish } = useLanguage();
@@ -106,7 +110,7 @@ export default function EditaUsuario() {
   const t = isEnglish ? translations.en : translations.pt;
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.label}>{t.title}</Text>
         <Text style={styles.label}>{t.cpf}</Text>
@@ -159,6 +163,7 @@ export default function EditaUsuario() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <Footer />
     </View>
   );
 }

@@ -8,6 +8,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLanguage } from '@/context/LanguageContext';
+import * as Calendar from 'expo-calendar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Habilita animação no Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -39,6 +41,26 @@ export default function ListarTarefas() {
   const prioridades = ['alta', 'media', 'baixa'];
   const statusList = ['pendente', 'concluido'];
 
+  // Função para buscar eventId do AsyncStorage
+  const getEventId = async (tarefaId: number): Promise<string | null> => {
+    try {
+      return await AsyncStorage.getItem(`eventId_${tarefaId}`);
+    } catch (e) {
+      console.error('Erro ao buscar eventId no AsyncStorage:', e);
+      return null;
+    }
+  };
+
+  // Função para remover eventId do AsyncStorage
+  const removeEventId = async (tarefaId: number) => {
+    try {
+      await AsyncStorage.removeItem(`eventId_${tarefaId}`);
+      console.log('eventId removido do AsyncStorage:', tarefaId);
+    } catch (e) {
+      console.error('Erro ao remover eventId do AsyncStorage:', e);
+    }
+  };
+
   // Função para buscar tarefas (extraída para ser reutilizada)
   const fetchTarefas = useCallback(async () => {
     if (!isAuthenticated || !token) {
@@ -46,7 +68,7 @@ export default function ListarTarefas() {
       return;
     }
     // Só busca se prazoFinal estiver vazio ou completo (AAAA-MM-DD)
-    if (filtros.prazoFinal && !/^\d{4}-\d{2}-\d{2}$/.test(filtros.prazoFinal)) {
+    if (filtros.prazoFinal && !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(filtros.prazoFinal)) {
       // Não faz nada se o campo está incompleto
       return;
     }
@@ -65,7 +87,14 @@ export default function ListarTarefas() {
       }
       if (!response.ok) throw new Error('Erro ao buscar tarefas');
       const data: Tarefa[] = await response.json();
-      setTarefas(data);
+      // Injeta eventId do AsyncStorage se existir
+      const tarefasComEventId = await Promise.all(
+        data.map(async (tarefa) => {
+          const eventId = await getEventId(tarefa.id_tarefa);
+          return eventId ? { ...tarefa, eventId } : tarefa;
+        })
+      );
+      setTarefas(tarefasComEventId);
     } catch (error) {
       Alert.alert('Erro', error instanceof Error ? error.message : 'Erro desconhecido');
     }
@@ -109,6 +138,11 @@ export default function ListarTarefas() {
       return;
     }
     try {
+      // Busca o eventId antes de excluir
+      const eventId = await getEventId(id);
+      if (eventId) {
+        await removerEventoCalendario(eventId, id);
+      }
       const response = await fetch(`${IP_CELULAR}/api/tarefa/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
@@ -128,20 +162,34 @@ export default function ListarTarefas() {
     }
   };
 
+  // Remove evento do calendário ao concluir tarefa
+  const removerEventoCalendario = async (eventId: string, tarefaId?: number) => {
+    try {
+      await Calendar.deleteEventAsync(eventId);
+      if (tarefaId) {
+        await removeEventId(tarefaId);
+      }
+      console.log('Evento do calendário removido:', eventId);
+    } catch (error) {
+      console.error('Erro ao remover evento do calendário:', error);
+    }
+  };
+
   // Atualiza o status da tarefa para "concluido"
   const handleToggleConcluido = async (tarefaId: number, value: boolean) => {
     if (!token) return;
     try {
-      // Busca a tarefa atual para enviar todos os campos obrigatórios
       const tarefaAtual = tarefas.find((t) => t.id_tarefa === tarefaId);
       if (!tarefaAtual) throw new Error('Tarefa não encontrada');
-
-      // Monta o corpo com todos os campos obrigatórios
+      // Remove evento do calendário se estiver concluindo e houver eventId
+      if (value && tarefaAtual.eventId) {
+        await removerEventoCalendario(tarefaAtual.eventId, tarefaId);
+        Alert.alert('Tarefa concluída!', 'O evento do calendário foi removido.');
+      }
       const body = {
         ...tarefaAtual,
         status: value ? 'concluido' : 'pendente',
       };
-
       const response = await fetch(`${IP_CELULAR}/api/tarefa/${tarefaId}`, {
         method: 'PUT',
         headers: {
@@ -274,85 +322,93 @@ export default function ListarTarefas() {
   };
   const t = isEnglish ? translations.en : translations.pt;
 
+  const Footer = () => (
+    <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+  );
+
   return (
-    <View style={styles.container}>
-      <FiltrosTarefa
-        filtros={filtros}
-        setFiltros={setFiltros}
-        categorias={categorias}
-        onPesquisar={() => {}}
-        prioridades={prioridades}
-        statusList={statusList}
-        t={t}
-      />
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {tarefasOrdenadas.length === 0 ? (
-          <Text style={styles.emptyText}>{t.nenhumaTarefa}</Text>
-        ) : (
-          tarefasOrdenadas.map((item) => (
-            <View key={item.id_tarefa} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}> 
-              <TouchableOpacity
-                style={styles.cardHeader}
-                onPress={() => handleExpand(item.id_tarefa)}
-                activeOpacity={0.7}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{item.titulo}</Text>
-                  <Text style={styles.cardCategoriasDestacada}>
-                    {t.categoria}: {getCategoriasNomes(item.categorias)}
-                  </Text>
-                </View>
-                {/* Checkbox para marcar como concluída, alinhado à direita antes do expandIcon */}
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      {/* Header removido */}
+      <View style={styles.container}>
+        <FiltrosTarefa
+          filtros={filtros}
+          setFiltros={setFiltros}
+          categorias={categorias}
+          onPesquisar={() => {}}
+          prioridades={prioridades}
+          statusList={statusList}
+          t={t}
+        />
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          {tarefasOrdenadas.length === 0 ? (
+            <Text style={styles.emptyText}>{t.nenhumaTarefa}</Text>
+          ) : (
+            tarefasOrdenadas.map((item) => (
+              <View key={item.id_tarefa} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}> 
                 <TouchableOpacity
-                  style={[
-                    styles.checkboxSquare,
-                    item.status === 'concluido' && styles.checkboxSquareChecked,
-                    { marginRight: 24 }
-                  ]}
-                  onPress={(e) => {
-                    e.stopPropagation && e.stopPropagation();
-                    handleToggleConcluido(item.id_tarefa, item.status !== 'concluido');
-                  }}
+                  style={styles.cardHeader}
+                  onPress={() => handleExpand(item.id_tarefa)}
                   activeOpacity={0.7}
                 >
-                  {item.status === 'concluido' && <View style={styles.checkboxInnerChecked} />}
-                </TouchableOpacity>
-                <Text style={styles.expandIcon}>{expanded === item.id_tarefa ? '-' : '+'}</Text>
-              </TouchableOpacity>
-              {expanded === item.id_tarefa && (
-                <View style={styles.cardContent}>
-                  <Text style={styles.itemText}>{t.conteudo}: {item.conteudo}</Text>
-                  <Text style={styles.itemText}>{t.status}: {item.status}</Text>
-                  <Text style={styles.itemText}>{t.prioridade}: {item.prioridade}</Text>
-                  <Text style={styles.itemText}>{t.inicio}: {formatDate(typeof item.data_inicio === 'string' ? item.data_inicio : item.data_inicio?.toString() ?? '')}</Text>
-                  <Text style={styles.itemText}>{t.fim}: {formatDate(typeof item.data_fim === 'string' ? item.data_fim : item.data_fim?.toString() ?? '')}</Text>
-                  <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                      style={[styles.deleteButton, { marginRight: 10 }]}
-                      onPress={() => navigation.navigate('EditaTarefa', { id_tarefa: item.id_tarefa })}>
-                      <Text style={styles.deleteButtonText}>{t.editar}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.deleteButton, { marginRight: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: '#8B4513' }]}
-                      onPress={() => navigation.navigate('DetalhesTarefa', { tarefa: item })}
-                    >
-                      <Text style={[styles.deleteButtonText, { color: '#8B4513' }]}>
-                        {isEnglish ? 'Details' : 'Detalhes'}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDelete(item.id_tarefa)}
-                    >
-                      <Text style={styles.deleteButtonText}>{t.excluir}</Text>
-                    </TouchableOpacity>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{item.titulo}</Text>
+                    <Text style={styles.cardCategoriasDestacada}>
+                      {t.categoria}: {getCategoriasNomes(item.categorias)}
+                    </Text>
                   </View>
-                </View>
-              )}
-            </View>
-          ))
-        )}
-      </ScrollView>
+                  {/* Checkbox para marcar como concluída, alinhado à direita antes do expandIcon */}
+                  <TouchableOpacity
+                    style={[
+                      styles.checkboxSquare,
+                      item.status === 'concluido' && styles.checkboxSquareChecked,
+                      { marginRight: 24 }
+                    ]}
+                    onPress={(e) => {
+                      e.stopPropagation && e.stopPropagation();
+                      handleToggleConcluido(item.id_tarefa, item.status !== 'concluido');
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    {item.status === 'concluido' && <View style={styles.checkboxInnerChecked} />}
+                  </TouchableOpacity>
+                  <Text style={styles.expandIcon}>{expanded === item.id_tarefa ? '-' : '+'}</Text>
+                </TouchableOpacity>
+                {expanded === item.id_tarefa && (
+                  <View style={styles.cardContent}>
+                    <Text style={styles.itemText}>{t.conteudo}: {item.conteudo}</Text>
+                    <Text style={styles.itemText}>{t.status}: {item.status}</Text>
+                    <Text style={styles.itemText}>{t.prioridade}: {item.prioridade}</Text>
+                    <Text style={styles.itemText}>{t.inicio}: {formatDate(typeof item.data_inicio === 'string' ? item.data_inicio : item.data_inicio?.toString() ?? '')}</Text>
+                    <Text style={styles.itemText}>{t.fim}: {formatDate(typeof item.data_fim === 'string' ? item.data_fim : item.data_fim?.toString() ?? '')}</Text>
+                    <View style={styles.buttonContainer}>
+                      <TouchableOpacity
+                        style={[styles.deleteButton, { marginRight: 10 }]}
+                        onPress={() => navigation.navigate('EditaTarefa', { id_tarefa: item.id_tarefa })}>
+                        <Text style={styles.deleteButtonText}>{t.editar}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.deleteButton, { marginRight: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: '#8B4513' }]}
+                        onPress={() => navigation.navigate('DetalhesTarefa', { tarefa: item })}
+                      >
+                        <Text style={[styles.deleteButtonText, { color: '#8B4513' }]}>
+                          {isEnglish ? 'Details' : 'Detalhes'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDelete(item.id_tarefa)}
+                      >
+                        <Text style={styles.deleteButtonText}>{t.excluir}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </View>
+            ))
+          )}
+        </ScrollView>
+      </View>
+      <Footer />
     </View>
   );
 }

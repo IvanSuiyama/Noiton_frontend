@@ -10,6 +10,10 @@ import { IP_CELULAR } from '@env';
 import MultiSelectDias from './MultiSelectDias';
 import { useLanguage } from '@/context/LanguageContext';
 
+const Footer = () => (
+  <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+);
+
 export default function CriaRotina() {
   const { token } = useAuth();
   const { userCpf } = useUserContext();
@@ -84,60 +88,63 @@ export default function CriaRotina() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.title, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
-      <Text style={styles.label}>{t.tarefa}</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={idTarefaBase}
-          onValueChange={v => setIdTarefaBase(v)}
-          style={styles.picker}
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      <View style={styles.container}>
+        <Text style={[styles.title, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
+        <Text style={styles.label}>{t.tarefa}</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={idTarefaBase}
+            onValueChange={v => setIdTarefaBase(v)}
+            style={styles.picker}
+          >
+            <Picker.Item label={t.selecione} value={null} />
+            {tarefas.map(tarefa => (
+              <Picker.Item key={tarefa.id_tarefa} label={tarefa.titulo} value={tarefa.id_tarefa} />
+            ))}
+          </Picker>
+        </View>
+        <Text style={styles.label}>{t.dias}</Text>
+        <MultiSelectDias diasSelecionados={dias} onChange={setDias} />
+        <Text style={styles.label}>{t.dataFim}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t.dataFim}
+          value={dataFim}
+          onChangeText={setDataFim}
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+          <Text style={styles.label}>{t.ativa}</Text>
+          <Switch value={ativa} onValueChange={setAtiva} />
+        </View>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#8B4513',
+            borderRadius: 5,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginTop: 8,
+            marginBottom: 8,
+          }}
+          onPress={handleSalvar}
         >
-          <Picker.Item label={t.selecione} value={null} />
-          {tarefas.map(tarefa => (
-            <Picker.Item key={tarefa.id_tarefa} label={tarefa.titulo} value={tarefa.id_tarefa} />
-          ))}
-        </Picker>
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.salvar}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#aaa',
+            borderRadius: 5,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginTop: 8,
+            marginBottom: 16,
+          }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.cancelar}</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={styles.label}>{t.dias}</Text>
-      <MultiSelectDias diasSelecionados={dias} onChange={setDias} />
-      <Text style={styles.label}>{t.dataFim}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={t.dataFim}
-        value={dataFim}
-        onChangeText={setDataFim}
-      />
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
-        <Text style={styles.label}>{t.ativa}</Text>
-        <Switch value={ativa} onValueChange={setAtiva} />
-      </View>
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#8B4513',
-          borderRadius: 5,
-          paddingVertical: 14,
-          alignItems: 'center',
-          marginTop: 8,
-          marginBottom: 8,
-        }}
-        onPress={handleSalvar}
-      >
-        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.salvar}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#aaa',
-          borderRadius: 5,
-          paddingVertical: 14,
-          alignItems: 'center',
-          marginTop: 8,
-          marginBottom: 16,
-        }}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.cancelar}</Text>
-      </TouchableOpacity>
+      <Footer />
     </View>
   );
 }

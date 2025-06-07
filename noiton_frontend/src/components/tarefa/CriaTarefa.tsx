@@ -8,6 +8,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/routes/Route';
 import { useAuth } from '@/context/ApiContext';
 import { useLanguage } from '@/context/LanguageContext';
+import * as Calendar from 'expo-calendar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const Footer = () => (
+  <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+);
 
 export default function CriaTarefa() {
   const { isEnglish } = useLanguage();
@@ -128,6 +134,78 @@ export default function CriaTarefa() {
     }, [isFocused, isAuthenticated, token])
   );
 
+  const requestCalendarPermission = async () => {
+    const { status } = await Calendar.requestCalendarPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(isEnglish ? 'Permission denied' : 'Permissão negada',
+        isEnglish ? 'Cannot access calendar without permission.' : 'Não é possível acessar o calendário sem permissão.');
+      return false;
+    }
+    return true;
+  };
+
+  const adicionarAoCalendario = async (tarefa: { titulo: string, dataFim: string | null }) => {
+    if (!tarefa.dataFim) return;
+    const hasPermission = await requestCalendarPermission();
+    if (!hasPermission) return;
+    try {
+      let dataFinal: Date;
+      if (tarefa.dataFim.includes('/')) {
+        const [dia, mes, ano] = tarefa.dataFim.split('/');
+        dataFinal = new Date(Number(ano), Number(mes) - 1, Number(dia), 23, 59, 0);
+      } else {
+        dataFinal = new Date(tarefa.dataFim);
+      }
+      const startDate = new Date();
+      const endDate = dataFinal;
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      console.log('Todos os calendários disponíveis:', calendars);
+      // Seleciona o calendário Google com accessLevel OWNER
+      const googleCalendar = calendars.find(cal => cal.accessLevel === Calendar.CalendarAccessLevel.OWNER && cal.source && cal.source.type === 'com.google');
+      if (!googleCalendar) {
+        console.error('Nenhum calendário Google com permissão de proprietário encontrado. Não é possível adicionar evento.');
+        Alert.alert(
+          isEnglish ? 'No Google Calendar found' : 'Nenhum Google Agenda encontrado',
+          isEnglish
+            ? 'Could not find a Google Calendar with owner access. Please check your calendar settings.'
+            : 'Não foi possível encontrar um Google Agenda com acesso de proprietário. Verifique as configurações do seu calendário.'
+        );
+        return;
+      }
+      const calendarId = googleCalendar.id;
+      console.log('Google Calendar ID selecionado:', calendarId);
+      // O evento deve aparecer apenas no dia do prazo final
+      // Evento de dia inteiro no prazo final
+      const eventStart = new Date(endDate);
+      eventStart.setHours(0, 0, 0, 0);
+      const eventEnd = new Date(endDate);
+      eventEnd.setHours(23, 59, 59, 999);
+      const eventId = await Calendar.createEventAsync(calendarId, {
+        title: `Tarefa: ${tarefa.titulo}`,
+        startDate: eventStart,
+        endDate: eventEnd,
+        timeZone: 'America/Sao_Paulo',
+        allDay: true,
+        alarms: [{ relativeOffset: -60 }],
+      });
+      // Salvar o eventId junto com a tarefa, se possível, para permitir remoção posterior
+      return eventId;
+    } catch (error) {
+      console.error('Erro ao adicionar ao calendário:', error);
+      Alert.alert(isEnglish ? 'Error' : 'Erro', (error instanceof Error ? error.message : String(error)) || (isEnglish ? 'Could not add to calendar.' : 'Não foi possível adicionar ao calendário.'));
+    }
+  };
+
+  // Função para salvar eventId no AsyncStorage
+  const saveEventId = async (tarefaId: number, eventId: string) => {
+    try {
+      await AsyncStorage.setItem(`eventId_${tarefaId}`, eventId);
+      console.log('eventId salvo no AsyncStorage:', eventId, 'para tarefa', tarefaId);
+    } catch (e) {
+      console.error('Erro ao salvar eventId no AsyncStorage:', e);
+    }
+  };
+
   const handleCreateTask = async () => {
     if (!isAuthenticated || !token) {
       console.warn('Token ausente ou usuário não autenticado. Não será feita a requisição de criação de tarefa.');
@@ -161,6 +239,12 @@ export default function CriaTarefa() {
       }
     }
 
+    // Adiciona ao calendário se tiver data_fim
+    let eventId = null;
+    if (data_fim) {
+      eventId = await adicionarAoCalendario({ titulo, dataFim });
+      console.log('eventId criado pelo Calendar:', eventId);
+    }
     // Payload para múltiplas categorias
     const novaTarefa: any = {
       titulo,
@@ -170,6 +254,7 @@ export default function CriaTarefa() {
       status,
       prioridade: prioridade as 'baixa' | 'media' | 'alta',
       categorias: categoriasSelecionadas.map(id => ({ id_categoria: id })),
+      eventId, // Salva o eventId junto com a tarefa
     };
 
     try {
@@ -194,6 +279,13 @@ export default function CriaTarefa() {
         throw new Error(errorMessage);
       }
 
+      const data = await response.json();
+      console.log('Resposta da API ao criar tarefa:', data);
+      // Se a resposta da API retornar o id_tarefa (ou id) e houver eventId, salva no AsyncStorage
+      const tarefaId = data?.id_tarefa || data?.id;
+      if (tarefaId && eventId) {
+        await saveEventId(tarefaId, eventId);
+      }
       Alert.alert('Sucesso', 'Tarefa criada com sucesso!');
       setTitulo('');
       setConteudo('');
@@ -212,136 +304,139 @@ export default function CriaTarefa() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#f5f5dc' }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-      <View style={styles.container}> 
-        <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
-        <Text style={styles.label}>{t.titulo}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite o título da tarefa"
-          value={titulo}
-          onChangeText={setTitulo}
-        />
-
-        <Text style={styles.label}>{t.conteudo}</Text>
-        <TextInput
-          style={[styles.textArea, { minHeight: 100, maxHeight: 300 }]}
-          value={conteudo}
-          onChangeText={setConteudo}
-          placeholder={t.conteudo}
-          multiline={true}
-          numberOfLines={5}
-          textAlignVertical="top"
-        />
-
-        <Text style={styles.label}>{t.prazoFinal}</Text>
-        <View style={styles.dataFimContainer}>
-          <Switch
-            value={isDataFimEnabled}
-            onValueChange={setIsDataFimEnabled}
-          />
-          <Text style={styles.checkboxLabel}>
-            {isDataFimEnabled ? 'Definir prazo' : 'Sem prazo'}
-          </Text>
-        </View>
-
-        {isDataFimEnabled && (
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
+          <Text style={styles.label}>{t.titulo}</Text>
           <TextInput
             style={styles.input}
-            placeholder="dd/mm/aaaa"
-            value={dataFim || ''}
-            onChangeText={handleDataFimChange}
-            keyboardType="numeric"
+            placeholder="Digite o título da tarefa"
+            value={titulo}
+            onChangeText={setTitulo}
           />
-        )}
 
-        <Text style={styles.label}>{t.prioridade}</Text>
-        <View style={styles.pickerContainerPriority}>
-          <Picker
-            selectedValue={prioridade}
-            onValueChange={(itemValue) => setPrioridade(itemValue)}
-            style={styles.pickerPriority}
-            itemStyle={styles.pickerItemPriority}
-          >
-            <Picker.Item label="Alta" value="alta" />
-            <Picker.Item label="Média" value="media" />
-            <Picker.Item label="Baixa" value="baixa" />
-          </Picker>
-        </View>
+          <Text style={styles.label}>{t.conteudo}</Text>
+          <TextInput
+            style={[styles.textArea, { minHeight: 100, maxHeight: 300 }]}
+            value={conteudo}
+            onChangeText={setConteudo}
+            placeholder={t.conteudo}
+            multiline={true}
+            numberOfLines={5}
+            textAlignVertical="top"
+          />
 
-        <Text style={styles.label}>{t.categoria}</Text>
-        <View style={{ marginBottom: 30 }}>
-          {categorias.length > 0 ? (
-            categorias.map((cat) => (
-              <TouchableOpacity
-                key={cat.id_categoria}
-                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}
-                onPress={() => {
-                  setCategoriasSelecionadas((prev) =>
-                    prev.includes(cat.id_categoria)
-                      ? prev.filter((id) => id !== cat.id_categoria)
-                      : [...prev, cat.id_categoria]
-                  );
-                }}
-              >
-                <View style={{
-                  width: 22,
-                  height: 22,
-                  borderWidth: 2,
-                  borderColor: '#8B4513',
-                  borderRadius: 4,
-                  marginRight: 8,
-                  backgroundColor: categoriasSelecionadas.includes(cat.id_categoria) ? '#8B4513' : '#fff',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                  {categoriasSelecionadas.includes(cat.id_categoria) && (
-                    <View style={{ width: 12, height: 12, backgroundColor: '#fff', borderRadius: 2 }} />
-                  )}
-                </View>
-                <Text style={{ color: '#8B4513', fontSize: 15 }}>{cat.nome}</Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={{ color: '#8B4513' }}>Nenhuma categoria encontrada</Text>
+          <Text style={styles.label}>{t.prazoFinal}</Text>
+          <View style={styles.dataFimContainer}>
+            <Switch
+              value={isDataFimEnabled}
+              onValueChange={setIsDataFimEnabled}
+            />
+            <Text style={styles.checkboxLabel}>
+              {isDataFimEnabled ? 'Definir prazo' : 'Sem prazo'}
+            </Text>
+          </View>
+
+          {isDataFimEnabled && (
+            <TextInput
+              style={styles.input}
+              placeholder="dd/mm/aaaa"
+              value={dataFim || ''}
+              onChangeText={handleDataFimChange}
+              keyboardType="numeric"
+            />
           )}
-          {/* <Button
-            title="Criar Categoria"
-            onPress={() => navigation.navigate('CriaCategoria')}
-            color="#8B4513"
-          /> */}
+
+          <Text style={styles.label}>{t.prioridade}</Text>
+          <View style={styles.pickerContainerPriority}>
+            <Picker
+              selectedValue={prioridade}
+              onValueChange={(itemValue) => setPrioridade(itemValue)}
+              style={styles.pickerPriority}
+              itemStyle={styles.pickerItemPriority}
+            >
+              <Picker.Item label="Alta" value="alta" />
+              <Picker.Item label="Média" value="media" />
+              <Picker.Item label="Baixa" value="baixa" />
+            </Picker>
+          </View>
+
+          <Text style={styles.label}>{t.categoria}</Text>
+          <View style={{ marginBottom: 30 }}>
+            {categorias.length > 0 ? (
+              categorias.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id_categoria}
+                  style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}
+                  onPress={() => {
+                    setCategoriasSelecionadas((prev) =>
+                      prev.includes(cat.id_categoria)
+                        ? prev.filter((id) => id !== cat.id_categoria)
+                        : [...prev, cat.id_categoria]
+                    );
+                  }}
+                >
+                  <View style={{
+                    width: 22,
+                    height: 22,
+                    borderWidth: 2,
+                    borderColor: '#8B4513',
+                    borderRadius: 4,
+                    marginRight: 8,
+                    backgroundColor: categoriasSelecionadas.includes(cat.id_categoria) ? '#8B4513' : '#fff',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                    {categoriasSelecionadas.includes(cat.id_categoria) && (
+                      <View style={{ width: 12, height: 12, backgroundColor: '#fff', borderRadius: 2 }} />
+                    )}
+                  </View>
+                  <Text style={{ color: '#8B4513', fontSize: 15 }}>{cat.nome}</Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={{ color: '#8B4513' }}>Nenhuma categoria encontrada</Text>
+            )}
+            {/* <Button
+              title="Criar Categoria"
+              onPress={() => navigation.navigate('CriaCategoria')}
+              color="#8B4513"
+            /> */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#8B4513',
+                borderRadius: 5,
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                alignItems: 'center',
+                marginTop: 8,
+                marginBottom: 8,
+              }}
+              onPress={() => navigation.navigate('CriaCategoria')}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Criar Categoria</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* <Button title={t.criar} onPress={handleCreateTask} color="#8B4513" /> */}
           <TouchableOpacity
             style={{
               backgroundColor: '#8B4513',
               borderRadius: 5,
-              paddingVertical: 10,
-              paddingHorizontal: 16,
+              paddingVertical: 14,
               alignItems: 'center',
               marginTop: 8,
-              marginBottom: 8,
+              marginBottom: 16,
             }}
-            onPress={() => navigation.navigate('CriaCategoria')}
+            onPress={handleCreateTask}
           >
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Criar Categoria</Text>
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
           </TouchableOpacity>
         </View>
-
-        {/* <Button title={t.criar} onPress={handleCreateTask} color="#8B4513" /> */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#8B4513',
-            borderRadius: 5,
-            paddingVertical: 14,
-            alignItems: 'center',
-            marginTop: 8,
-            marginBottom: 16,
-          }}
-          onPress={handleCreateTask}
-        >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+      <Footer />
+    </View>
   );
 }
 

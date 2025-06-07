@@ -6,6 +6,15 @@ import type { RootStackParamList } from '@/routes/Route';
 import { useLanguage } from '@/context/LanguageContext';
 import type { Tarefa } from '@/models/Tarefa';
 
+// const Header = () => (
+//   <View style={{ backgroundColor: '#8B4513', paddingTop: 36, paddingBottom: 12, alignItems: 'center' }}>
+//     <Text style={{ color: '#f5f5dc', fontSize: 28, fontWeight: 'bold', letterSpacing: 2 }}>noiton</Text>
+//   </View>
+// );
+const Footer = () => (
+  <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+);
+
 export default function DetalhesTarefa() {
   const route = useRoute<any>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -55,39 +64,43 @@ export default function DetalhesTarefa() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.titulo}>{tarefa.titulo}</Text>
-      <Text style={styles.data}>
-        {t.inicio}: {formatDate(tarefa.data_inicio)}
-        {tarefa.data_fim ? `  |  ${t.fim}: ${formatDate(tarefa.data_fim)}` : ''}
-      </Text>
-      <View style={styles.chipRow}>
-        <View style={[styles.chip, (styles as any)[`chip_${tarefa.prioridade}`]]}>
-          <Text style={styles.chipText}>{t.prioridade}: {tarefa.prioridade}</Text>
-        </View>
-        <View style={[styles.chip, tarefa.status === 'concluido' ? styles.chip_concluido : styles.chip_pendente]}>
-          <Text style={styles.chipText}>{t.status}: {tarefa.status}</Text>
-        </View>
-      </View>
-      {tarefa.categorias && tarefa.categorias.length > 0 && (
-        <View style={styles.categoriasContainer}>
-          <Text style={styles.categoriasTitulo}>{t.categorias}:</Text>
-          <View style={styles.categoriasRow}>
-            {tarefa.categorias.map((cat: { id_categoria: number; nome: string }) => (
-              <View key={cat.id_categoria} style={styles.categoriaChip}>
-                <Text style={styles.categoriaChipText}>{cat.nome}</Text>
-              </View>
-            ))}
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      {/* Header removido */}
+      <ScrollView style={styles.container}>
+        <Text style={styles.titulo}>{tarefa.titulo}</Text>
+        <Text style={styles.data}>
+          {t.inicio}: {formatDate(tarefa.data_inicio)}
+          {tarefa.data_fim ? `  |  ${t.fim}: ${formatDate(tarefa.data_fim)}` : ''}
+        </Text>
+        <View style={styles.chipRow}>
+          <View style={[styles.chip, (styles as any)[`chip_${tarefa.prioridade}`]]}>
+            <Text style={styles.chipText}>{t.prioridade}: {tarefa.prioridade}</Text>
+          </View>
+          <View style={[styles.chip, tarefa.status === 'concluido' ? styles.chip_concluido : styles.chip_pendente]}>
+            <Text style={styles.chipText}>{t.status}: {tarefa.status}</Text>
           </View>
         </View>
-      )}
-      <View style={styles.conteudoContainer}>
-        <Text style={styles.conteudo}>{tarefa.conteudo}</Text>
-      </View>
-      <TouchableOpacity style={styles.botaoVoltar} onPress={() => navigation.goBack()}>
-        <Text style={styles.botaoVoltarText}>{t.voltar}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {tarefa.categorias && tarefa.categorias.length > 0 && (
+          <View style={styles.categoriasContainer}>
+            <Text style={styles.categoriasTitulo}>{t.categorias}:</Text>
+            <View style={styles.categoriasRow}>
+              {tarefa.categorias.map((cat: { id_categoria: number; nome: string }) => (
+                <View key={cat.id_categoria} style={styles.categoriaChip}>
+                  <Text style={styles.categoriaChipText}>{cat.nome}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+        <View style={styles.conteudoContainer}>
+          <Text style={styles.conteudo}>{tarefa.conteudo}</Text>
+        </View>
+        <TouchableOpacity style={styles.botaoVoltar} onPress={() => navigation.goBack()}>
+          <Text style={styles.botaoVoltarText}>{t.voltar}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+      <Footer />
+    </View>
   );
 }
 

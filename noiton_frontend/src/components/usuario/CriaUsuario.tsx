@@ -7,6 +7,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
 import { useLanguage } from '@/context/LanguageContext';
 
+const Footer = () => (
+  <View style={{ backgroundColor: '#8B4513', height: 38 }} />
+);
+
 export default function CriaUsuario() {
   const { isEnglish } = useLanguage();
   const [cpf, setCpf] = useState('');
@@ -137,7 +141,7 @@ export default function CriaUsuario() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
         <Text style={styles.label}>{t.cpf}</Text>
@@ -199,6 +203,7 @@ export default function CriaUsuario() {
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <Footer />
     </View>
   );
 }

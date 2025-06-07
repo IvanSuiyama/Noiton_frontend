@@ -103,6 +103,7 @@ export default function CriaCategoria() {
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <View style={styles.footer} />
     </View>
   );
 }
@@ -136,5 +137,14 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     width: '100%',
     minWidth: 0,
+  },
+  footer: {
+    height: 38,
+    backgroundColor: '#8B4513',
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    zIndex: 10,
   },
 });

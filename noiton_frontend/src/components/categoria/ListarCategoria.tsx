@@ -124,6 +124,7 @@ export default function ListarCategoria() {
           </View>
         )}
       />
+      <View style={styles.footer} />
     </View>
   );
 }
@@ -177,5 +178,14 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontSize: 16,
     marginTop: 16,
+  },
+  footer: {
+    height: 38,
+    backgroundColor: '#8B4513',
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    zIndex: 10,
   },
 });
