@@ -317,7 +317,20 @@ export default function EditaTarefa() {
           )}
         </View>
 
-        <Button title={t.salvar} onPress={handleUpdateTask} color="#8B4513" />
+        {/* <Button title={t.salvar} onPress={handleUpdateTask} color="#8B4513" /> */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#8B4513',
+            borderRadius: 5,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginTop: 8,
+            marginBottom: 16,
+          }}
+          onPress={handleUpdateTask}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.salvar}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

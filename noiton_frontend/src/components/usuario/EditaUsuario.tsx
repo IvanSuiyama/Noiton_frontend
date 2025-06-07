@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { useUserContext } from '@/context/UserContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
@@ -12,8 +12,6 @@ export default function EditaUsuario() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
-  const [senha, setSenha] = useState(''); // Add state to store the existing password
-  const [senhaAlterada, setSenhaAlterada] = useState(false); // Novo estado para rastrear alterações na senha
 
   useEffect(() => {
     if (userCpf) {
@@ -36,8 +34,6 @@ export default function EditaUsuario() {
       setNome(usuario.nome);
       setEmail(usuario.email);
       setTelefone(usuario.telefone);
-      setSenha(''); // Reseta a senha para evitar envio desnecessário
-      setSenhaAlterada(false); // Reseta o estado de alteração da senha
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       Alert.alert('Erro', errorMessage);
@@ -56,7 +52,6 @@ export default function EditaUsuario() {
         nome,
         email,
         telefone,
-        ...(senhaAlterada && { senha }), // Inclui a senha apenas se ela foi alterada
       };
 
       const response = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, {
@@ -97,7 +92,6 @@ export default function EditaUsuario() {
       nome: 'Nome',
       email: 'E-mail',
       telefone: 'Telefone',
-      senha: 'Senha',
       salvar: 'Salvar',
     },
     en: {
@@ -106,7 +100,6 @@ export default function EditaUsuario() {
       nome: 'Name',
       email: 'Email',
       telefone: 'Phone',
-      senha: 'Password',
       salvar: 'Save',
     }
   };
@@ -149,17 +142,21 @@ export default function EditaUsuario() {
           keyboardType="phone-pad"
         />
 
-        <Text style={styles.label}>{t.senha}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite a senha"
-          value={senha}
-          onChangeText={setSenha}
-          secureTextEntry
-        />
-
         <View style={styles.buttonContainer}>
-          <Button title={t.salvar} onPress={handleUpdateUser} color="#8B4513" /> {/* Botão marrom */}
+          {/* <Button title={t.salvar} onPress={handleUpdateUser} color="#8B4513" /> */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#8B4513',
+              borderRadius: 5,
+              paddingVertical: 14,
+              alignItems: 'center',
+              marginTop: 8,
+              marginBottom: 16,
+            }}
+            onPress={handleUpdateUser}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.salvar}</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>

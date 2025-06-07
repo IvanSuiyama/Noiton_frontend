@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import Categoria from '@/models/Categoria';
 import { IP_CELULAR, IP_WIFI } from '@env'; // Importa a variável do .env
 import { useNavigation } from '@react-navigation/native';
@@ -80,6 +80,7 @@ export default function CriaCategoria() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
         <Text style={styles.label}>{t.title}</Text>
         <TextInput
           style={styles.input}
@@ -87,7 +88,20 @@ export default function CriaCategoria() {
           value={nome}
           onChangeText={setNome}
         />
-        <Button title={t.criar} onPress={handleCreateCategory} color="#8B4513" />
+        {/* <Button title={t.criar} onPress={handleCreateCategory} color="#8B4513" /> */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#8B4513',
+            borderRadius: 5,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginTop: 8,
+            marginBottom: 16,
+          }}
+          onPress={handleCreateCategory}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

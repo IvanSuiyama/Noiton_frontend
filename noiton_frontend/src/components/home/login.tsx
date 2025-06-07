@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Button, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Alert, KeyboardAvoidingView, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Use NativeStackNavigationProp
 import type { RootStackParamList } from '@/routes/Route'; // Importação do tipo RootStackParamList
@@ -114,7 +114,20 @@ export default function Login() {
             onChangeText={setPassword}
           />
           <View style={styles.buttonContainer}>
-            <Button title={t.entrar} onPress={handleLogin} color="#8B4513" /> {/* Botão marrom */}
+            {/* <Button title={t.entrar} onPress={handleLogin} color="#8B4513" /> */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#8B4513',
+                borderRadius: 5,
+                paddingVertical: 14,
+                alignItems: 'center',
+                marginTop: 8,
+                marginBottom: 16,
+              }}
+              onPress={handleLogin}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.entrar}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

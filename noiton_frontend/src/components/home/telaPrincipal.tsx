@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HamburgerMenu from '../menu/HamburguerMenu';
 import PopUpUser from './PopUpUser';
+import { IP_CELULAR } from '@env';
 import { useAuth } from '@/context/ApiContext';
 import { useUserContext } from '@/context/UserContext';
 import { useNavigation } from '@react-navigation/native';
@@ -13,6 +14,7 @@ import { useLanguage } from '@/context/LanguageContext';
 
 export default function TelaPrincipal() {
   const [isPopUpVisible, setPopUpVisible] = useState(false);
+  const { token } = useAuth();
   const { userCpf } = useUserContext();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isEnglish, setIsEnglish } = useLanguage();
@@ -20,8 +22,7 @@ export default function TelaPrincipal() {
   const translations = {
     pt:{
       welcome: 'Organize seu dia. Faça acontecer.',
-      createTask: 'Não seja tímido, pode criar quantas tarefas quiser!',
-      createTaskButton: 'Criar Nova Tarefa',
+      // Removido createTask e createTaskButton
       dailyTip: 'Dica do dia',
       tips:[
         'Dica: Use categorias para organizar melhor suas tarefas!',
@@ -33,8 +34,7 @@ export default function TelaPrincipal() {
     },
     en: {
       welcome: 'Organize your day. Make it happen.',
-      createTask: "Don't be shy, you can create as many tasks as you want!",
-      createTaskButton: 'Create New Task',
+      // Removido createTask e createTaskButton
       dailyTip: 'Tip of the day',
       tips: [
         'Tip: Use categories to better organize your tasks!',
@@ -67,6 +67,80 @@ export default function TelaPrincipal() {
     navigation.navigate('CriaTarefa'); // Ajuste o nome da rota conforme seu projeto
   };
 
+  // Estados para rotinas e tarefas comuns
+  const [rotinasHoje, setRotinasHoje] = useState<any[]>([]);
+  const [tarefasRecentes, setTarefasRecentes] = useState<any[]>([]);
+
+  // Tradução dos dias da semana
+  const diasSemanaPt = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado'];
+  const diasSemanaEn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const diasSemanaApi = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+
+  // Pega o dia da semana atual
+  const hoje = new Date();
+  const diaSemanaIndex = hoje.getDay(); // 0 (domingo) a 6 (sábado)
+  const diaSemanaNome = isEnglish ? diasSemanaEn[diaSemanaIndex] : diasSemanaPt[diaSemanaIndex];
+  const diaSemanaApi = diasSemanaApi[diaSemanaIndex];
+
+  // Buscar rotinas do usuário e filtrar para hoje
+  useEffect(() => {
+    const fetchRotinas = async () => {
+      if (!token || !userCpf) return;
+      try {
+        const resp = await fetch(`${IP_CELULAR}/api/rotinas?cpf=${userCpf}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) throw new Error();
+        const data = await resp.json();
+        // Filtra rotinas ativas, não expiradas e que tenham o dia da semana de hoje
+        const hojeDate = new Date();
+        const hojeISO = hojeDate.toISOString().slice(0, 10); // yyyy-mm-dd
+        let rotinasHoje = Array.isArray(data)
+          ? data.filter((r) =>
+              r.ativa &&
+              (!r.data_fim || r.data_fim >= hojeISO) &&
+              typeof r.dias_semana === 'string' &&
+              r.dias_semana.split(',').map((s: string) => s.trim().toLowerCase()).includes(diaSemanaApi)
+            )
+          : [];
+        // Remove duplicadas por id_rotina
+        rotinasHoje = rotinasHoje.filter(
+          (r, idx, arr) =>
+            r.id_rotina != null &&
+            arr.findIndex(x => x.id_rotina === r.id_rotina) === idx
+        );
+        setRotinasHoje(rotinasHoje);
+      } catch {
+        setRotinasHoje([]);
+      }
+    };
+    fetchRotinas();
+  }, [token, userCpf, diaSemanaApi]);
+
+  // Buscar tarefas comuns (não rotinas) e pegar as 3 mais recentes
+  useEffect(() => {
+    const fetchTarefas = async () => {
+      if (!token || !userCpf) return;
+      try {
+        const resp = await fetch(`${IP_CELULAR}/api/tarefa/list`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) throw new Error();
+        const data = await resp.json();
+        // Filtra tarefas que não têm id_rotina (ou campo similar, ajuste conforme seu backend)
+        const comuns = Array.isArray(data)
+          ? data.filter((t: any) => !t.id_rotina)
+          : [];
+        // Ordena por data_inicio decrescente e pega as 3 mais recentes
+        comuns.sort((a: any, b: any) => new Date(b.data_inicio).getTime() - new Date(a.data_inicio).getTime());
+        setTarefasRecentes(comuns.slice(0, 3));
+      } catch {
+        setTarefasRecentes([]);
+      }
+    };
+    fetchTarefas();
+  }, [token, userCpf]);
+
   return (
     <View style={styles.container}>
       {/* Menu Sanduíche */}
@@ -90,25 +164,68 @@ export default function TelaPrincipal() {
       <PopUpUser visible={isPopUpVisible} onClose={() => setPopUpVisible(false)} />
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Mensagem de boas-vindas personalizada com ícone de calendário */}
-        <View style={styles.welcomeContainer}>
-          <View style={styles.welcomeRow}>
-            <MaterialIcons name="calendar-today" size={38} color="#8B4513" style={{ marginRight: 10 }} />
-            <Text style={styles.welcomeText}>{isEnglish ? translations.en.welcome : translations.pt.welcome}</Text>
-          </View>
+        {/* Espaço para afastar do topo/fixar containers abaixo dos ícones */}
+        <View style={{ height: 90 }} />
+
+        {/* Calendário e dia da semana destacado */}
+        <View style={styles.calendarioDiaSemanaRow}>
+          <MaterialIcons name="calendar-today" size={28} color="#8B4513" style={{ marginRight: 10 }} />
+          <Text style={styles.calendarioDiaSemanaSimples}>
+            {diaSemanaNome}
+          </Text>
         </View>
 
-        {/* Mensagem motivacional e botão de criar tarefa */}
-        <View style={styles.criarTarefaContainer}>
-          <Text style={styles.criarTarefaMsg}>
-            {isEnglish ? translations.en.createTask : translations.pt.createTask}
+        {/* Container do dia da semana e rotinas de hoje */}
+        <View style={styles.diaSemanaContainer}>
+          <Text style={styles.diaSemanaSubtitulo}>
+            {isEnglish ? 'Routines for today:' : 'Rotinas para hoje:'}
           </Text>
-          <TouchableOpacity style={styles.criarTarefaButton} onPress={handleCriarTarefa}>
-            <Text style={styles.criarTarefaButtonText}>
-              {isEnglish ? translations.en.createTaskButton : translations.pt.createTaskButton}
+          {rotinasHoje.length === 0 ? (
+            <Text style={styles.diaSemanaVazio}>
+              {isEnglish ? 'No routines for today.' : 'Nenhuma rotina para hoje.'}
             </Text>
-          </TouchableOpacity>
+          ) : (
+            rotinasHoje.map((rotina, idx) => (
+              <View key={`rotina_${rotina.id_rotina}`} style={styles.rotinaItem}>
+                <Text style={styles.rotinaTitulo}>
+                  {isEnglish ? 'Routine:' : 'Rotina:'} {rotina.titulo || rotina.nome || rotina.id_tarefa_base}
+                </Text>
+                <Text style={styles.rotinaDias}>
+                  {isEnglish ? 'Days:' : 'Dias:'} {rotina.dias_semana}
+                </Text>
+                {rotina.data_fim && (
+                  <Text style={styles.rotinaDias}>
+                    {isEnglish ? 'End:' : 'Fim:'} {new Date(rotina.data_fim).toLocaleDateString()}
+                  </Text>
+                )}
+              </View>
+            ))
+          )}
         </View>
+
+        {/* Container das 3 tarefas comuns mais recentes */}
+        <View style={styles.recentesContainer}>
+          <Text style={styles.recentesTitulo}>
+            {isEnglish ? 'Most Recent Tasks' : 'Tarefas Mais Recentes'}
+          </Text>
+          {tarefasRecentes.length === 0 ? (
+            <Text style={styles.recentesVazio}>
+              {isEnglish ? 'No recent tasks.' : 'Nenhuma tarefa recente.'}
+            </Text>
+          ) : (
+            tarefasRecentes.map((tarefa, idx) => (
+              <View key={`tarefa_${tarefa.id_tarefa ?? idx}`} style={styles.tarefaItem}>
+                <Text style={styles.tarefaTitulo}>{tarefa.titulo}</Text>
+                <Text style={styles.tarefaData}>
+                  {isEnglish ? 'Created:' : 'Criada:'} {new Date(tarefa.data_inicio).toLocaleDateString()}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Pequeno espaço antes do bloco de boas-vindas */}
+        <View style={{ height: 8 }} />
 
         {/* Dica do dia */}
         <View style={styles.dicaContainer}>
@@ -124,11 +241,11 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: '#f5f5dc',
+    paddingBottom: 30,
   },
   container: {
     flex: 1,
     backgroundColor: '#f5f5dc',
-    paddingBottom: 30,
     minHeight: '100%',
   },
   avatarButton: {
@@ -161,58 +278,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1,
   },
-  welcomeContainer: {
-    marginTop: 120,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  welcomeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    width: '100%',
-  },
-  welcomeText: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#8B4513',
-    textAlign: 'left',
-  },
-  criarTarefaContainer: {
-    marginTop: 10,
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  criarTarefaMsg: {
-    fontSize: 22,
-    color: '#8B4513',
-    marginBottom: 10,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  criarTarefaButton: {
-    backgroundColor: '#8B4513',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  criarTarefaButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   dicaContainer: {
-    backgroundColor: '#fffbe6',
+    backgroundColor: '#f5ecd2', // igual aos outros containers
     borderRadius: 10,
     marginHorizontal: 20,
     marginBottom: 18,
-    marginTop: 40, // aumenta o espaço acima
+    marginTop: 30,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#e6c200',
+    borderColor: '#8B4513', // igual aos outros containers
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 3,
@@ -224,13 +298,122 @@ const styles = StyleSheet.create({
   dicaTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#bfa100',
+    color: '#8B4513', // igual aos outros títulos
     marginBottom: 4,
     textAlign: 'center',
   },
   dicaText: {
     fontSize: 15,
-    color: '#8B4513',
+    color: '#8B4513', // igual aos outros textos
     textAlign: 'center',
   },
+  calendarioDiaSemanaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  calendarioDiaSemanaSimples: {
+    fontSize: 40,
+    color: '#8B4513',
+    fontWeight: 'bold',
+  },
+  diaSemanaContainer: {
+    backgroundColor: '#f5ecd2',
+    borderRadius: 10,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    marginTop: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e6c200',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  diaSemanaTitulo: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  diaSemanaSubtitulo: {
+    fontSize: 15,
+    color: '#bfa100',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  diaSemanaVazio: {
+    fontSize: 14,
+    color: '#8B4513',
+    fontStyle: 'italic',
+    textAlign: 'left',
+  },
+  rotinaItem: {
+    marginBottom: 6,
+    backgroundColor: '#f5f5dc',
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#e6c200',
+    width: '100%',
+  },
+  rotinaTitulo: {
+    fontWeight: 'bold',
+    color: '#8B4513',
+    fontSize: 15,
+  },
+  rotinaDias: {
+    color: '#8B4513',
+    fontSize: 13,
+  },
+  recentesContainer: {
+    backgroundColor: '#f5ecd2',
+    borderRadius: 10,
+    marginHorizontal: 20,
+    marginBottom: 3,
+    marginTop: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#8B4513',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  recentesTitulo: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  recentesVazio: {
+    fontSize: 14,
+    color: '#8B4513',
+    fontStyle: 'italic',
+    textAlign: 'left',
+  },
+  tarefaItem: {
+    marginBottom: 6,
+    backgroundColor: '#f5f5dc',
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#8B4513',
+    width: '100%',
+  },
+  tarefaTitulo: {
+    fontWeight: 'bold',
+    color: '#8B4513',
+    fontSize: 15,
+  },
+  tarefaData: {
+    color: '#8B4513',
+    fontSize: 13,
+  },
+  // Removidos: criarTarefaContainer, criarTarefaMsg, criarTarefaButton, criarTarefaButtonText, welcomeContainer, welcomeRow, welcomeText
 });

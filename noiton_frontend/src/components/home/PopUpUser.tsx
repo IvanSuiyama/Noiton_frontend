@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, Modal, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, Modal, Alert, TouchableOpacity } from 'react-native';
 import { useUserContext } from '@/context/UserContext';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack'; // Corrigir a importação
@@ -115,26 +115,22 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
                 <Text style={styles.label}>{userData.telefone}</Text>
               </View>
               <View style={styles.buttonContainer}>
-                <Button
-                  title={t.editar}
-                  onPress={() => navigation.navigate('EditaUsuario')}
-                  color="#8B4513"
-                />
+                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EditaUsuario')}>
+                  <Text style={styles.buttonText}>{t.editar}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={onClose}>
+                  <Text style={styles.buttonText}>{t.fechar}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.buttonLogoff} onPress={() => setShowLogoff(true)}>
+                  <Text style={styles.buttonText}>{t.logoff}</Text>
+                </TouchableOpacity>
               </View>
             </>
           ) : (
-            <Text>{t.carregando}</Text>
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>{t.carregando}</Text>
+            </View>
           )}
-          <View style={styles.buttonContainer}>
-            <Button title={t.fechar} onPress={onClose} color="#8B4513" />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              title={t.logoff}
-              color="#B22222"
-              onPress={() => setShowLogoff(true)}
-            />
-          </View>
         </View>
       </View>
     </Modal>
@@ -144,30 +140,65 @@ export default function PopUpUser({ visible, onClose }: PopUpUserProps) {
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    justifyContent: 'flex-start', // Posiciona no topo
-    alignItems: 'flex-end', // Posiciona no canto superior direito
-    padding: 20, // Espaçamento do canto
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fundo semi-transparente
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   content: {
     width: '80%',
-    padding: 20,
-    backgroundColor: '#f5f5dc', // Fundo bege claro
+    backgroundColor: '#f5f5dc', // bege
     borderRadius: 10,
+    padding: 20,
+    elevation: 5,
   },
   fieldContainer: {
-    marginBottom: 10, // Aumentei o espaçamento entre os campos
-  },
-  label: {
-    fontSize: 16,
-    color: '#000', // Preto normal
+    flexDirection: 'row',
+    marginBottom: 10,
   },
   labelBold: {
-    fontSize: 16,
-    fontWeight: 'bold', // Preto negrito
-    color: '#000',
+    fontWeight: 'bold',
+    color: '#8B4513', // marrom escuro
+    flex: 1,
+    fontSize: 20,
+  },
+  label: {
+    color: '#6B4F27', // marrom médio
+    flex: 2,
+    fontSize: 20,
   },
   buttonContainer: {
-    marginTop: 15, // Espaçamento maior entre os botões
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  button: {
+    flex: 1,
+    backgroundColor: '#8B4513',
+    borderRadius: 5,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  buttonLogoff: {
+    flex: 1,
+    backgroundColor: '#B22222', // vermelho
+    borderRadius: 5,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  loadingText: {
+    color: '#8B4513', // marrom escuro
+    fontSize: 10,
   },
 });

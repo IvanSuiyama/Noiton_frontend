@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Alert, StyleSheet, TextInput, Switch } from 'react-native';
+import { View, Text, Alert, StyleSheet, TextInput, Switch, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useAuth } from '@/context/ApiContext';
 import { useUserContext } from '@/context/UserContext';
@@ -85,7 +85,7 @@ export default function CriaRotina() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t.title}</Text>
+      <Text style={[styles.title, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
       <Text style={styles.label}>{t.tarefa}</Text>
       <View style={styles.pickerContainer}>
         <Picker
@@ -112,8 +112,32 @@ export default function CriaRotina() {
         <Text style={styles.label}>{t.ativa}</Text>
         <Switch value={ativa} onValueChange={setAtiva} />
       </View>
-      <Button title={t.salvar} color="#8B4513" onPress={handleSalvar} />
-      <Button title={t.cancelar} color="#aaa" onPress={() => navigation.goBack()} />
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#8B4513',
+          borderRadius: 5,
+          paddingVertical: 14,
+          alignItems: 'center',
+          marginTop: 8,
+          marginBottom: 8,
+        }}
+        onPress={handleSalvar}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.salvar}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#aaa',
+          borderRadius: 5,
+          paddingVertical: 14,
+          alignItems: 'center',
+          marginTop: 8,
+          marginBottom: 16,
+        }}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.cancelar}</Text>
+      </TouchableOpacity>
     </View>
   );
 }

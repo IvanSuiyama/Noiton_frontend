@@ -130,9 +130,22 @@ export default function RotinasScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{t.title}</Text>
-      <Button title={t.nova} color="#8B4513" onPress={() => navigation.navigate('CriaRotina')} />
+      {/* <Button title={t.nova} color="#8B4513" onPress={() => navigation.navigate('CriaRotina')} /> */}
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#8B4513',
+          borderRadius: 5,
+          paddingVertical: 14,
+          alignItems: 'center',
+          marginTop: 8,
+          marginBottom: 16,
+        }}
+        onPress={() => navigation.navigate('CriaRotina')}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.nova}</Text>
+      </TouchableOpacity>
       {loading ? (
-        <Text>Loading...</Text>
+        <Text style={styles.empty}>Loading...</Text>
       ) : rotinas.length === 0 ? (
         <Text style={styles.empty}>{t.nenhuma}</Text>
       ) : (

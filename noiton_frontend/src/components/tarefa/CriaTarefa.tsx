@@ -214,7 +214,7 @@ export default function CriaTarefa() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.label}>{t.title}</Text>
+        <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
         <Text style={styles.label}>{t.titulo}</Text>
         <TextInput
           style={styles.input}
@@ -304,38 +304,41 @@ export default function CriaTarefa() {
           ) : (
             <Text style={{ color: '#8B4513' }}>Nenhuma categoria encontrada</Text>
           )}
-          <Button
+          {/* <Button
             title="Criar Categoria"
             onPress={() => navigation.navigate('CriaCategoria')}
             color="#8B4513"
-          />
+          /> */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#8B4513',
+              borderRadius: 5,
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              alignItems: 'center',
+              marginTop: 8,
+              marginBottom: 8,
+            }}
+            onPress={() => navigation.navigate('CriaCategoria')}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Criar Categoria</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Toggle para rotina */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}>
-          <Text style={{ color: '#8B4513', fontWeight: 'bold', marginRight: 10 }}>
-            {isEnglish ? 'Is this a routine?' : 'É recorrente?'}
-          </Text>
-          <Switch value={ehRecorrente} onValueChange={setEhRecorrente} />
-          {ehRecorrente && (
-            <TouchableOpacity
-              style={{
-                marginLeft: 16,
-                backgroundColor: '#8B4513',
-                paddingVertical: 6,
-                paddingHorizontal: 16,
-                borderRadius: 6,
-              }}
-              onPress={() => navigation.navigate('CriaRotina')}
-            >
-              <Text style={{ color: '#fff', fontWeight: 'bold' }}>
-                {isEnglish ? 'Configure Routine' : 'Configurar Rotina'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <Button title={t.criar} onPress={handleCreateTask} color="#8B4513" /> {/* Botão marrom */}
+        {/* <Button title={t.criar} onPress={handleCreateTask} color="#8B4513" /> */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#8B4513',
+            borderRadius: 5,
+            paddingVertical: 14,
+            alignItems: 'center',
+            marginTop: 8,
+            marginBottom: 16,
+          }}
+          onPress={handleCreateTask}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
