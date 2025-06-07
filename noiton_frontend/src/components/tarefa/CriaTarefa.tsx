@@ -212,8 +212,8 @@ export default function CriaTarefa() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <ScrollView style={{ flex: 1, backgroundColor: '#f5f5dc' }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+      <View style={styles.container}> 
         <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
         <Text style={styles.label}>{t.titulo}</Text>
         <TextInput
@@ -225,12 +225,13 @@ export default function CriaTarefa() {
 
         <Text style={styles.label}>{t.conteudo}</Text>
         <TextInput
-          style={styles.textArea}
-          placeholder="Digite o conteúdo da tarefa"
+          style={[styles.textArea, { minHeight: 100, maxHeight: 300 }]}
           value={conteudo}
           onChangeText={setConteudo}
+          placeholder={t.conteudo}
           multiline={true}
-          numberOfLines={4}
+          numberOfLines={5}
+          textAlignVertical="top"
         />
 
         <Text style={styles.label}>{t.prazoFinal}</Text>
@@ -339,8 +340,8 @@ export default function CriaTarefa() {
         >
           <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.criar}</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 

@@ -333,6 +333,14 @@ export default function ListarTarefas() {
                       <Text style={styles.deleteButtonText}>{t.editar}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
+                      style={[styles.deleteButton, { marginRight: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: '#8B4513' }]}
+                      onPress={() => navigation.navigate('DetalhesTarefa', { tarefa: item })}
+                    >
+                      <Text style={[styles.deleteButtonText, { color: '#8B4513' }]}>
+                        {isEnglish ? 'Details' : 'Detalhes'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       style={styles.deleteButton}
                       onPress={() => handleDelete(item.id_tarefa)}
                     >

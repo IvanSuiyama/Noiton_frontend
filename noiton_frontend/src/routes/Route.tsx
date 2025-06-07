@@ -28,6 +28,7 @@ export type RootStackParamList = {
   EditaTarefa: { id_tarefa: number };
   RotinasScreen: undefined;
   CriaRotina: { tarefaBase?: any } | undefined;
+  DetalhesTarefa: { tarefa: import('@/models/Tarefa').Tarefa };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -49,6 +50,7 @@ export default function AppRoutes() {
           <Stack.Screen name="EditaTarefa" component={EditaTarefa} />
           <Stack.Screen name="RotinasScreen" component={RotinasScreen} />
           <Stack.Screen name="CriaRotina" component={CriaRotina} />
+          <Stack.Screen name="DetalhesTarefa" component={require('@/components/tarefa/DetalhesTarefa').default} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

@@ -214,12 +214,20 @@ export default function TelaPrincipal() {
             </Text>
           ) : (
             tarefasRecentes.map((tarefa, idx) => (
-              <View key={`tarefa_${tarefa.id_tarefa ?? idx}`} style={styles.tarefaItem}>
+              <TouchableOpacity
+                key={`tarefa_${tarefa.id_tarefa ?? idx}`}
+                style={styles.tarefaItem}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('DetalhesTarefa', { tarefa })}
+              >
                 <Text style={styles.tarefaTitulo}>{tarefa.titulo}</Text>
                 <Text style={styles.tarefaData}>
                   {isEnglish ? 'Created:' : 'Criada:'} {new Date(tarefa.data_inicio).toLocaleDateString()}
                 </Text>
-              </View>
+                <Text style={{ color: '#8B4513', fontSize: 13, marginTop: 2, fontWeight: 'bold' }}>
+                  {isEnglish ? 'Details' : 'Detalhes'}
+                </Text>
+              </TouchableOpacity>
             ))
           )}
         </View>
