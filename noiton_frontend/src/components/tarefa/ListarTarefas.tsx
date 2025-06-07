@@ -44,8 +44,18 @@ export default function ListarTarefas() {
       console.warn('Token ausente ou usuário não autenticado. Não será feita a requisição.');
       return;
     }
+    // Só busca se prazoFinal estiver vazio ou completo (AAAA-MM-DD)
+    if (filtros.prazoFinal && !/^\d{4}-\d{2}-\d{2}$/.test(filtros.prazoFinal)) {
+      // Não faz nada se o campo está incompleto
+      return;
+    }
     try {
-      const response = await fetch(`${IP_CELULAR}/api/tarefa/list`, {
+      // Monta a query string de filtros
+      const params = new URLSearchParams();
+      if (filtros.prazoFinal) params.append('prazoFinal', filtros.prazoFinal);
+      if (filtros.semPrazo) params.append('semPrazo', 'true');
+      const url = `${IP_CELULAR}/api/tarefa/list${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.status === 401) {
@@ -58,7 +68,7 @@ export default function ListarTarefas() {
     } catch (error) {
       Alert.alert('Erro', error instanceof Error ? error.message : 'Erro desconhecido');
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, token, filtros.prazoFinal, filtros.semPrazo]);
 
   // Recarrega tarefas ao focar na tela
   useFocusEffect(
@@ -205,12 +215,6 @@ export default function ListarTarefas() {
     if (filtros.categoria && !(tarefa.categorias && tarefa.categorias.some(cat => cat.id_categoria === filtros.categoria))) return false;
     if (filtros.prioridade && tarefa.prioridade !== filtros.prioridade) return false;
     if (filtros.status && tarefa.status !== filtros.status) return false;
-    if (filtros.prazoFinal) {
-      const dataTarefa = tarefa.data_fim ? new Date(tarefa.data_fim) : null;
-      const dataFiltro = new Date(filtros.prazoFinal);
-      if (!dataTarefa || dataTarefa.toDateString() !== dataFiltro.toDateString()) return false;
-    }
-    if (filtros.semPrazo && tarefa.data_fim) return false;
     return true;
   });
   let tarefasOrdenadas = [...tarefasFiltradas];
@@ -328,7 +332,7 @@ function FiltrosTarefa({
           onSubmitEditing={onPesquisar}
         />
         <TouchableOpacity style={styles.filtroSearchButton} onPress={onPesquisar}>
-          <MaterialIcons name="search" size={22} color="#fff" />
+          <MaterialIcons name="search" size={24} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.filtroExpandButton}
@@ -344,9 +348,9 @@ function FiltrosTarefa({
       {showAdvanced && (
         <View style={styles.filtrosAvancadosContainer}>
           {/* Categoria */}
-          <TouchableOpacity style={styles.filtroTituloLinha} onPress={() => toggleFilter('categoria')}>
-            <Text style={styles.filtroLabelMini}>Categoria</Text>
-            <MaterialIcons name={openFilters['categoria'] ? 'expand-less' : 'expand-more'} size={18} color="#8B4513" />
+          <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('categoria')}>
+            <Text style={styles.filtroLabelGrande}>Categoria</Text>
+            <MaterialIcons name={openFilters['categoria'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['categoria'] && (
             <View style={styles.filtroOpcoesLinha}>
@@ -362,7 +366,7 @@ function FiltrosTarefa({
                       onPress={() => setFiltros({ ...filtros, categoria: filtros.categoria === cat.id_categoria ? null : cat.id_categoria })}
                     >
                       <Text style={[
-                        styles.filtroChipTextMini,
+                        styles.filtroChipTextGrande,
                         filtros.categoria === cat.id_categoria && { color: '#fff' }
                       ]}>{cat.nome}</Text>
                     </TouchableOpacity>
@@ -372,9 +376,9 @@ function FiltrosTarefa({
             </View>
           )}
           {/* Prioridade */}
-          <TouchableOpacity style={styles.filtroTituloLinha} onPress={() => toggleFilter('prioridade')}>
-            <Text style={styles.filtroLabelMini}>Prioridade</Text>
-            <MaterialIcons name={openFilters['prioridade'] ? 'expand-less' : 'expand-more'} size={18} color="#8B4513" />
+          <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('prioridade')}>
+            <Text style={styles.filtroLabelGrande}>Prioridade</Text>
+            <MaterialIcons name={openFilters['prioridade'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['prioridade'] && (
             <View style={styles.filtroOpcoesLinha}>
@@ -388,7 +392,7 @@ function FiltrosTarefa({
                   onPress={() => setFiltros({ ...filtros, prioridade: filtros.prioridade === pri ? null : pri })}
                 >
                   <Text style={[
-                    styles.filtroChipTextMini,
+                    styles.filtroChipTextGrande,
                     filtros.prioridade === pri && { color: '#fff' }
                   ]}>{pri.charAt(0).toUpperCase() + pri.slice(1)}</Text>
                 </TouchableOpacity>
@@ -396,9 +400,9 @@ function FiltrosTarefa({
             </View>
           )}
           {/* Status */}
-          <TouchableOpacity style={styles.filtroTituloLinha} onPress={() => toggleFilter('status')}>
-            <Text style={styles.filtroLabelMini}>Status</Text>
-            <MaterialIcons name={openFilters['status'] ? 'expand-less' : 'expand-more'} size={18} color="#8B4513" />
+          <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('status')}>
+            <Text style={styles.filtroLabelGrande}>Status</Text>
+            <MaterialIcons name={openFilters['status'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['status'] && (
             <View style={styles.filtroOpcoesLinha}>
@@ -412,7 +416,7 @@ function FiltrosTarefa({
                   onPress={() => setFiltros({ ...filtros, status: filtros.status === st ? null : st })}
                 >
                   <Text style={[
-                    styles.filtroChipTextMini,
+                    styles.filtroChipTextGrande,
                     filtros.status === st && { color: '#fff' }
                   ]}>{st.charAt(0).toUpperCase() + st.slice(1)}</Text>
                 </TouchableOpacity>
@@ -420,9 +424,9 @@ function FiltrosTarefa({
             </View>
           )}
           {/* Ordenar por */}
-          <TouchableOpacity style={styles.filtroTituloLinha} onPress={() => toggleFilter('ordenarPor')}>
-            <Text style={styles.filtroLabelMini}>Ordenar por</Text>
-            <MaterialIcons name={openFilters['ordenarPor'] ? 'expand-less' : 'expand-more'} size={18} color="#8B4513" />
+          <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('ordenarPor')}>
+            <Text style={styles.filtroLabelGrande}>Ordenar por</Text>
+            <MaterialIcons name={openFilters['ordenarPor'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['ordenarPor'] && (
             <View style={styles.filtroOpcoesLinha}>
@@ -436,7 +440,7 @@ function FiltrosTarefa({
                   onPress={() => setFiltros({ ...filtros, ordenarPor: filtros.ordenarPor === ord ? null : ord })}
                 >
                   <Text style={[
-                    styles.filtroChipTextMini,
+                    styles.filtroChipTextGrande,
                     filtros.ordenarPor === ord && { color: '#fff' }
                   ]}>
                     {ord === 'data_inicio' ? 'Data Criação' :
@@ -449,42 +453,26 @@ function FiltrosTarefa({
             </View>
           )}
           {/* Prazo Final */}
-          <TouchableOpacity style={styles.filtroTituloLinha} onPress={() => toggleFilter('prazoFinal')}>
-            <Text style={styles.filtroLabelMini}>Prazo Final</Text>
-            <MaterialIcons name={openFilters['prazoFinal'] ? 'expand-less' : 'expand-more'} size={18} color="#8B4513" />
+          <TouchableOpacity style={styles.filtroTituloLinhaGrande} onPress={() => toggleFilter('prazoFinal')}>
+            <Text style={styles.filtroLabelGrande}>Prazo Final</Text>
+            <MaterialIcons name={openFilters['prazoFinal'] ? 'expand-less' : 'expand-more'} size={24} color="#8B4513" />
           </TouchableOpacity>
           {openFilters['prazoFinal'] && (
             <View style={styles.filtroOpcoesLinha}>
               <TextInput
                 style={styles.filtroInputData}
-                placeholder="DD-MM-AAAA"
-                value={
-                  filtros.prazoFinal
-                    ? (() => {
-                        // Converte de AAAA-MM-DD para DD-MM-AAAA se possível
-                        const parts = filtros.prazoFinal.split('-');
-                        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                        return filtros.prazoFinal;
-                      })()
-                    : ''
-                }
-                onChangeText={text => {
-                  // Converte de DD-MM-AAAA para AAAA-MM-DD ao salvar no filtro
-                  const parts = text.split('-');
-                  if (parts.length === 3) {
-                    setFiltros({ ...filtros, prazoFinal: `${parts[2]}-${parts[1]}-${parts[0]}` });
-                  } else {
-                    setFiltros({ ...filtros, prazoFinal: text });
-                  }
-                }}
+                placeholder="AAAA-MM-DD"
+                value={filtros.prazoFinal || ''}
+                onChangeText={text => setFiltros({ ...filtros, prazoFinal: text })}
                 keyboardType="numeric"
+                maxLength={10}
               />
               {filtros.prazoFinal && (
                 <TouchableOpacity
                   style={[styles.filtroChipMini, { backgroundColor: '#ffe6e6', borderColor: '#8B4513' }]}
                   onPress={() => setFiltros({ ...filtros, prazoFinal: null })}
                 >
-                  <Text style={styles.filtroChipTextMini}>Limpar</Text>
+                  <Text style={styles.filtroChipTextGrande}>Limpar</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -492,7 +480,7 @@ function FiltrosTarefa({
                 onPress={() => setFiltros({ ...filtros, semPrazo: !filtros.semPrazo })}
               >
                 <Text style={[
-                  styles.filtroChipTextMini,
+                  styles.filtroChipTextGrande,
                   filtros.semPrazo && { color: '#fff' }
                 ]}>Sem Prazo</Text>
               </TouchableOpacity>
@@ -556,18 +544,19 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: 2,
   },
-  filtroTituloLinha: {
+  filtroTituloLinhaGrande: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     marginBottom: 0,
+    minHeight: 48,
   },
-  filtroLabelMini: {
+  filtroLabelGrande: {
     fontWeight: 'bold',
     color: '#8B4513',
-    fontSize: 13,
+    fontSize: 20,
   },
   filtroOpcoesLinha: {
     flexDirection: 'row',
@@ -599,6 +588,11 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontWeight: '500',
     fontSize: 12,
+  },
+  filtroChipTextGrande: {
+    color: '#8B4513',
+    fontWeight: '500',
+    fontSize: 18,
   },
   filtroInputMini: {
     height: 28,
@@ -643,12 +637,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 20, // aumentado para combinar com os filtros
     fontWeight: 'bold',
     color: '#8B4513',
   },
   cardCategoriasDestacada: {
-    fontSize: 12,
+    fontSize: 16, // aumentado para combinar com os filtros
     color: '#8B4513',
     marginTop: 2,
   },
@@ -681,7 +675,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
   },
   itemText: {
-    fontSize: 12,
+    fontSize: 16, // aumentado para combinar com os filtros
     color: '#8B4513',
     marginBottom: 2,
   },
@@ -701,12 +695,12 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 16, // aumentado para melhor legibilidade
   },
   emptyText: {
     textAlign: 'center',
     color: '#8B4513',
-    fontSize: 14,
+    fontSize: 16, // aumentado para melhor visibilidade
     marginTop: 16,
   },
 });
