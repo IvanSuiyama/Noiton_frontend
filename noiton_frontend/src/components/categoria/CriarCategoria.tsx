@@ -144,7 +144,10 @@ const styles = StyleSheet.create({
     width: '100%',
     position: 'absolute',
     bottom: 0,
-    left: 0,
+    left: 25,
+    right: 0,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
     zIndex: 10,
   },
 });

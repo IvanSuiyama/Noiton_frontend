@@ -133,51 +133,54 @@ export default function RotinasScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
-      <View style={styles.container}>
-        <Text style={styles.title}>{t.title}</Text>
-        {/* <Button title={t.nova} color="#8B4513" onPress={() => navigation.navigate('CriaRotina')} /> */}
-        <TouchableOpacity
-          style={{
-            backgroundColor: '#8B4513',
-            borderRadius: 5,
-            paddingVertical: 14,
-            alignItems: 'center',
-            marginTop: 8,
-            marginBottom: 16,
-          }}
-          onPress={() => navigation.navigate('CriaRotina')}
-        >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.nova}</Text>
-        </TouchableOpacity>
-        {loading ? (
-          <Text style={styles.empty}>Loading...</Text>
-        ) : rotinas.length === 0 ? (
-          <Text style={styles.empty}>{t.nenhuma}</Text>
-        ) : (
-          <FlatList
-            data={rotinas}
-            keyExtractor={item =>
-              item && item.id_rotina != null
-                ? `rotina_${String(item.id_rotina)}`
-                : `rotina_${Math.random().toString(36).slice(2)}`
-            }
-            renderItem={({ item }) => (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>
-                  {t.tarefa}: {getTarefaBaseNome(item.id_tarefa_base)}
-                </Text>
-                <Text>{t.dias}: {item.dias_semana}</Text>
-                <Text>{t.dataFim}: {formatDateBr(item.data_fim)}</Text>
-                <Text>{t.ativa}: {item.ativa ? '✔️' : '❌'}</Text>
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id_rotina)}>
-                  <Text style={styles.deleteBtnText}>{t.excluir}</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-        )}
+      <View style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <Text style={styles.title}>{t.title}</Text>
+          {/* <Button title={t.nova} color="#8B4513" onPress={() => navigation.navigate('CriaRotina')} /> */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#8B4513',
+              borderRadius: 5,
+              paddingVertical: 14,
+              alignItems: 'center',
+              marginTop: 8,
+              marginBottom: 16,
+            }}
+            onPress={() => navigation.navigate('CriaRotina')}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.nova}</Text>
+          </TouchableOpacity>
+          {loading ? (
+            <Text style={styles.empty}>Loading...</Text>
+          ) : rotinas.length === 0 ? (
+            <Text style={styles.empty}>{t.nenhuma}</Text>
+          ) : (
+            <FlatList
+              data={rotinas}
+              keyExtractor={item =>
+                item && item.id_rotina != null
+                  ? `rotina_${String(item.id_rotina)}`
+                  : `rotina_${Math.random().toString(36).slice(2)}`
+              }
+              renderItem={({ item }) => (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>
+                    {t.tarefa}: {getTarefaBaseNome(item.id_tarefa_base)}
+                  </Text>
+                  <Text>{t.dias}: {item.dias_semana}</Text>
+                  <Text>{t.dataFim}: {formatDateBr(item.data_fim)}</Text>
+                  <Text>{t.ativa}: {item.ativa ? '✔️' : '❌'}</Text>
+                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id_rotina)}>
+                    <Text style={styles.deleteBtnText}>{t.excluir}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 60 }}
+            />
+          )}
+        </View>
+        <Footer />
       </View>
-      <Footer />
     </View>
   );
 }

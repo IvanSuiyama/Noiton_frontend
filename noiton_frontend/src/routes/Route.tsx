@@ -37,6 +37,7 @@ export default function AppRoutes() {
   return (
     <AuthProvider>
       <NavigationContainer>
+      
         <Stack.Navigator initialRouteName="HomePage">
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="HomePage" component={HomePage} />
