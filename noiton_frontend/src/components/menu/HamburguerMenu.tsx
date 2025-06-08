@@ -48,13 +48,12 @@ export default function HamburgerMenu() {
       setExpandedMenu(expandedMenu === t.categorias ? null : t.categorias); // Expande ou recolhe o menu
     } else if (item === t.rotinas) {
       setExpandedMenu(expandedMenu === t.rotinas ? null : t.rotinas); // Expande ou recolhe o menu de rotinas
-    } 
-    // else if (item === t.notificacoes) {
-    //   setMenuVisible(false);
-    //   navigation.navigate('ListarNotificacoes');
-    // } else {
-    //   setMenuVisible(false); // Fecha o menu ao clicar em outros itens
-    // }
+    } else if (item === t.notificacoes) {
+      setMenuVisible(false);
+      navigation.navigate('ListarNotificacoes');
+    } else {
+      setMenuVisible(false); // Fecha o menu ao clicar em outros itens
+    }
   };
 
   

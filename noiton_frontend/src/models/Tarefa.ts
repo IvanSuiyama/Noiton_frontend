@@ -8,4 +8,5 @@ export interface Tarefa {
     prioridade: 'baixa' | 'media' | 'alta';
     categorias?: { id_categoria: number; nome: string }[]; // para múltiplas categorias
     eventId?: string | null; // id do evento do calendário
+    id_pai?: number | null; // id da tarefa pai, se for subtarefa
   }

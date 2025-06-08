@@ -19,7 +19,7 @@ export type RootStackParamList = {
   Login: undefined;
   HomePage: undefined;
   TelaPrincipal: undefined;
-  CriaTarefa: undefined;
+  CriaTarefa: { id_pai?: number } | undefined;
   CriaCategoria: undefined;
   ListarCategoria: undefined;
   ListarTarefas: undefined;

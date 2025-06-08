@@ -256,16 +256,18 @@ export default function ListarTarefas() {
   }, [tarefas]);
 
   // Função para aplicar os filtros
-  const tarefasFiltradas = filteredTarefas.filter(tarefa => {
-    if (filtros.palavraChave && !(
-      tarefa.titulo.toLowerCase().includes(filtros.palavraChave.toLowerCase()) ||
-      tarefa.conteudo.toLowerCase().includes(filtros.palavraChave.toLowerCase())
-    )) return false;
-    if (filtros.categoria && !(tarefa.categorias && tarefa.categorias.some(cat => cat.id_categoria === filtros.categoria))) return false;
-    if (filtros.prioridade && tarefa.prioridade !== filtros.prioridade) return false;
-    if (filtros.status && tarefa.status !== filtros.status) return false;
-    return true;
-  });
+  const tarefasFiltradas = filteredTarefas
+    .filter(tarefa => !tarefa.id_pai) // Exclui subtarefas
+    .filter(tarefa => {
+      if (filtros.palavraChave && !(
+        tarefa.titulo.toLowerCase().includes(filtros.palavraChave.toLowerCase()) ||
+        tarefa.conteudo.toLowerCase().includes(filtros.palavraChave.toLowerCase())
+      )) return false;
+      if (filtros.categoria && !(tarefa.categorias && tarefa.categorias.some(cat => cat.id_categoria === filtros.categoria))) return false;
+      if (filtros.prioridade && tarefa.prioridade !== filtros.prioridade) return false;
+      if (filtros.status && tarefa.status !== filtros.status) return false;
+      return true;
+    });
   let tarefasOrdenadas = [...tarefasFiltradas];
   if (filtros.ordenarPor === 'data_inicio') {
     tarefasOrdenadas.sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime());

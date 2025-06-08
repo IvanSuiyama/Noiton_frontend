@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, Alert, StyleSheet, Switch, ScrollView, K
 import { Picker } from '@react-native-picker/picker';
 import { Tarefa } from '../../models/Tarefa';
 import { IP_WIFI, IP_CELULAR } from '@env';
-import { useNavigation, useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useIsFocused, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/routes/Route';
 import { useAuth } from '@/context/ApiContext';
@@ -33,31 +33,38 @@ export default function CriaTarefa() {
   const { token, isAuthenticated, logout } = useAuth();
   const { userCpf } = useUserContext();
   const isFocused = useIsFocused();
+  const route = useRoute();
   useMonitorarTarefasVencimentoDetalhado();
+
+  // Se vier via navegação, permite criar subtarefa
+  const idPai = (route as any)?.params?.id_pai !== undefined ? (route as any)?.params?.id_pai : null;
+  console.log('[CriaTarefa] idPai value at component mount:', idPai);
 
   // Traduções dos textos
   const translations = {
     pt: {
-      title: 'Criar Tarefa',
+      title: idPai ? 'Criar Subtarefa' : 'Criar Tarefa',
       titulo: 'Título',
       conteudo: 'Conteúdo',
       prazoFinal: 'Prazo Final',
       prioridade: 'Prioridade',
       categoria: 'Categoria',
-      criar: 'Criar Tarefa',
+      criar: idPai ? 'Criar Subtarefa' : 'Criar Tarefa',
       selecione: 'Selecione',
       obrigatorio: 'Campo obrigatório',
+      sucesso: idPai ? 'Subtarefa criada com sucesso!' : 'Tarefa criada com sucesso!',
     },
     en: {
-      title: 'Create Task',
+      title: idPai ? 'Create Subtask' : 'Create Task',
       titulo: 'Title',
       conteudo: 'Content',
       prazoFinal: 'Due Date',
       prioridade: 'Priority',
       categoria: 'Category',
-      criar: 'Create Task',
+      criar: idPai ? 'Create Subtask' : 'Create Task',
       selecione: 'Select',
       obrigatorio: 'Required field',
+      sucesso: idPai ? 'Subtask created successfully!' : 'Task created successfully!',
     }
   };
   const t = isEnglish ? translations.en : translations.pt;
@@ -260,7 +267,11 @@ export default function CriaTarefa() {
       prioridade: prioridade as 'baixa' | 'media' | 'alta',
       categorias: categoriasSelecionadas.map(id => ({ id_categoria: id })),
       eventId, // Salva o eventId junto com a tarefa
+      id_pai: idPai !== null ? idPai : null, // Sempre envia id_pai explicitamente
     };
+    console.log('[CriaTarefa] idPai before sending:', idPai);
+    console.log('[CriaTarefa] id_pai in payload:', novaTarefa.id_pai);
+    console.log('[CriaTarefa] Full payload to backend:', JSON.stringify(novaTarefa, null, 2));
 
     try {
       console.log('Enviando token no header (criar tarefa):', token);
@@ -291,7 +302,7 @@ export default function CriaTarefa() {
       if (tarefaId && eventId) {
         await saveEventId(tarefaId, eventId);
       }
-      Alert.alert('Sucesso', 'Tarefa criada com sucesso!');
+      Alert.alert('Sucesso', t.sucesso);
       // Executa monitoramento imediatamente após criar tarefa
       if (token && userCpf) {
         await monitorarTarefasVencimentoDetalhadoNow(token, userCpf);

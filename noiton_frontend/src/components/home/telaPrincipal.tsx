@@ -130,7 +130,7 @@ export default function TelaPrincipal() {
         const data = await resp.json();
         // Filtra tarefas que não têm id_rotina (ou campo similar, ajuste conforme seu backend)
         const comuns = Array.isArray(data)
-          ? data.filter((t: any) => !t.id_rotina)
+          ? data.filter((t: any) => !t.id_rotina && !t.id_pai)
           : [];
         // Ordena por data_inicio decrescente e pega as 3 mais recentes
         comuns.sort((a: any, b: any) => new Date(b.data_inicio).getTime() - new Date(a.data_inicio).getTime());
