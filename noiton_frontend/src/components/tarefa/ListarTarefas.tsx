@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, Alert, StyleSheet, FlatList, TouchableOpacity, LayoutAnimation, Platform, UIManager, ScrollView, Button, TextInput } from 'react-native';
+import { View, Text, Alert, StyleSheet, FlatList, TouchableOpacity, LayoutAnimation, Platform, UIManager, ScrollView, Button, TextInput, Modal } from 'react-native';
 import { Tarefa } from '../../models/Tarefa';
 import { IP_WIFI, IP_CELULAR } from '@env';
 import { useAuth } from '@/context/ApiContext';
@@ -10,6 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useLanguage } from '@/context/LanguageContext';
 import * as Calendar from 'expo-calendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUserContext } from '@/context/UserContext';
 
 // Habilita animação no Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -27,6 +28,7 @@ export default function ListarTarefas() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const { token, isAuthenticated } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { userCpf } = useUserContext();
 
   // Estado para os filtros
   const [filtros, setFiltros] = useState({
@@ -40,6 +42,12 @@ export default function ListarTarefas() {
   });
   const prioridades = ['alta', 'media', 'baixa'];
   const statusList = ['pendente', 'concluido'];
+
+  // Estado para o modal de compartilhamento
+  const [modalVisible, setModalVisible] = useState(false);
+  const [emailCompartilhar, setEmailCompartilhar] = useState('');
+  const [tarefaParaCompartilhar, setTarefaParaCompartilhar] = useState<Tarefa | null>(null);
+  const [loadingCompartilhar, setLoadingCompartilhar] = useState(false);
 
   // Função para buscar eventId do AsyncStorage
   const getEventId = async (tarefaId: number): Promise<string | null> => {
@@ -63,8 +71,8 @@ export default function ListarTarefas() {
 
   // Função para buscar tarefas (extraída para ser reutilizada)
   const fetchTarefas = useCallback(async () => {
-    if (!isAuthenticated || !token) {
-      console.warn('Token ausente ou usuário não autenticado. Não será feita a requisição.');
+    if (!isAuthenticated || !token || !userCpf) {
+      console.warn('Token ou CPF ausente. Não será feita a requisição.');
       return;
     }
     // Só busca se prazoFinal estiver vazio ou completo (AAAA-MM-DD)
@@ -75,6 +83,7 @@ export default function ListarTarefas() {
     try {
       // Monta a query string de filtros
       const params = new URLSearchParams();
+      params.append('cpf', userCpf); // <-- filtro pelo usuário logado
       if (filtros.prazoFinal) params.append('prazoFinal', filtros.prazoFinal);
       if (filtros.semPrazo) params.append('semPrazo', 'true');
       const url = `${IP_CELULAR}/api/tarefa/list${params.toString() ? '?' + params.toString() : ''}`;
@@ -98,7 +107,7 @@ export default function ListarTarefas() {
     } catch (error) {
       Alert.alert('Erro', error instanceof Error ? error.message : 'Erro desconhecido');
     }
-  }, [isAuthenticated, token, filtros.prazoFinal, filtros.semPrazo]);
+  }, [isAuthenticated, token, userCpf, filtros.prazoFinal, filtros.semPrazo]);
 
   // Recarrega tarefas ao focar na tela
   useFocusEffect(
@@ -279,6 +288,32 @@ export default function ListarTarefas() {
     tarefasOrdenadas.sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime());
   }
 
+  // Diagnóstico: loga todos os id_tarefa e seus tipos antes de filtrar
+  console.log('Todos os id_tarefa recebidos:', tarefasOrdenadas.map(t => t.id_tarefa));
+  console.log('Tipos de id_tarefa:', tarefasOrdenadas.map(t => typeof t.id_tarefa));
+
+  // Remove duplicatas de tarefas por id_tarefa (força string)
+  const seen = new Set<string>();
+  const tarefasUnicas = [] as typeof tarefasOrdenadas;
+  for (const t of tarefasOrdenadas) {
+    const idStr = String(t.id_tarefa);
+    if (!seen.has(idStr)) {
+      seen.add(idStr);
+      tarefasUnicas.push(t);
+    }
+  }
+
+  // Loga duplicatas para depuração
+  const ids = tarefasOrdenadas.map(t => String(t.id_tarefa));
+  const duplicados = ids.filter((id, idx) => ids.indexOf(id) !== idx);
+  if (duplicados.length > 0) {
+    console.warn('IDs de tarefas duplicados detectados:', duplicados);
+  }
+
+  // Loga as chaves que serão usadas no render
+  const renderKeys = tarefasUnicas.map((item, idx) => `tarefa_${item.id_tarefa}_${idx}`);
+  console.log('Chaves usadas para renderização:', renderKeys);
+
   const { isEnglish } = useLanguage();
   const translations = {
     pt: {
@@ -300,6 +335,12 @@ export default function ListarTarefas() {
       conteudo: 'Conteúdo',
       inicio: 'Início',
       fim: 'Fim',
+      compartilhar: 'Compartilhar',
+      email: 'E-mail',
+      tarefaCompartilhada: 'Tarefa compartilhada!',
+      erroCompartilhar: 'Erro ao compartilhar tarefa',
+      usuarioNaoEncontrado: 'Usuário não encontrado',
+      campoObrigatorio: 'Campo obrigatório',
     },
     en: {
       palavraChave: 'Search by keyword...',
@@ -320,6 +361,12 @@ export default function ListarTarefas() {
       conteudo: 'Content',
       inicio: 'Start',
       fim: 'End',
+      compartilhar: 'Share',
+      email: 'E-mail',
+      tarefaCompartilhada: 'Task shared!',
+      erroCompartilhar: 'Error sharing task',
+      usuarioNaoEncontrado: 'User not found',
+      campoObrigatorio: 'Required field',
     }
   };
   const t = isEnglish ? translations.en : translations.pt;
@@ -328,8 +375,92 @@ export default function ListarTarefas() {
     <View style={{ backgroundColor: '#8B4513', height: 38 }} />
   );
 
+  // Função para abrir modal de compartilhar
+  const abrirModalCompartilhar = (tarefa: Tarefa) => {
+    setTarefaParaCompartilhar(tarefa);
+    setEmailCompartilhar('');
+    setModalVisible(true);
+  };
+
+  // Função para compartilhar tarefa
+  const compartilharTarefa = async () => {
+    if (!emailCompartilhar || !tarefaParaCompartilhar) return;
+    setLoadingCompartilhar(true);
+    try {
+      const emailLimpo = emailCompartilhar.trim().toLowerCase();
+      const url = `${IP_CELULAR}/api/usuario/por-email/${encodeURIComponent(emailLimpo)}`;
+      console.log('Buscando usuário por e-mail:', url);
+      const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const respText = await resp.text();
+      console.log('Resposta do backend (status', resp.status, '):', respText);
+      if (!resp.ok) {
+        Alert.alert(
+          isEnglish ? 'User not found' : 'Usuário não encontrado',
+          `Status: ${resp.status}\nResposta: ${respText}`
+        );
+        throw new Error(isEnglish ? 'User not found' : 'Usuário não encontrado');
+      }
+      const usuario = JSON.parse(respText);
+      if (!usuario || !usuario.cpf) throw new Error(isEnglish ? 'User not found' : 'Usuário não encontrado');
+      const resp2 = await fetch(`${IP_CELULAR}/api/tarefa/compartilhar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id_tarefa: tarefaParaCompartilhar.id_tarefa,
+          cpf: usuario.cpf,
+        }),
+      });
+      if (!resp2.ok) throw new Error(isEnglish ? 'Error sharing task' : 'Erro ao compartilhar tarefa');
+      Alert.alert(isEnglish ? 'Task shared!' : 'Tarefa compartilhada!');
+      setModalVisible(false);
+    } catch (e) {
+      console.log('Erro completo:', e);
+      const msg = (e && typeof e === 'object' && 'message' in e) ? (e as any).message : String(e);
+      Alert.alert('Erro', msg);
+    } finally {
+      setLoadingCompartilhar(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      {/* Modal de Compartilhar */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 10, padding: 24, width: '85%' }}>
+            <Text style={{ fontSize: 18, color: '#8B4513', fontWeight: 'bold', marginBottom: 12 }}>
+              {isEnglish ? 'Share Task' : 'Compartilhar Tarefa'}
+            </Text>
+            <Text style={{ marginBottom: 8 }}>{isEnglish ? 'Enter the user email:' : 'Adicione o email do usuário que deseja compartilhar a tarefa:'}</Text>
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#8B4513', borderRadius: 6, padding: 8, marginBottom: 16, color: '#8B4513' }}
+              placeholder="E-mail"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={emailCompartilhar}
+              onChangeText={setEmailCompartilhar}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginRight: 16 }}>
+                <Text style={{ color: '#8B4513', fontWeight: 'bold' }}>{isEnglish ? 'Cancel' : 'Cancelar'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={compartilharTarefa} disabled={loadingCompartilhar || !emailCompartilhar} style={{ backgroundColor: '#8B4513', borderRadius: 6, paddingVertical: 8, paddingHorizontal: 18 }}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{loadingCompartilhar ? (isEnglish ? 'Sharing...' : 'Compartilhando...') : (isEnglish ? 'Share' : 'Compartilhar')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       {/* Header removido */}
       <View style={styles.container}>
         <FiltrosTarefa
@@ -342,11 +473,11 @@ export default function ListarTarefas() {
           t={t}
         />
         <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-          {tarefasOrdenadas.length === 0 ? (
+          {tarefasUnicas.length === 0 ? (
             <Text style={styles.emptyText}>{t.nenhumaTarefa}</Text>
           ) : (
-            tarefasOrdenadas.map((item) => (
-              <View key={item.id_tarefa} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}> 
+            tarefasUnicas.map((item, idx) => (
+              <View key={`tarefa_${item.id_tarefa}_${idx}`} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}> 
                 <TouchableOpacity
                   style={styles.cardHeader}
                   onPress={() => handleExpand(item.id_tarefa)}
@@ -372,6 +503,16 @@ export default function ListarTarefas() {
                     activeOpacity={0.7}
                   >
                     {item.status === 'concluido' && <View style={styles.checkboxInnerChecked} />}
+                  </TouchableOpacity>
+                  {/* Botão de compartilhar */}
+                  <TouchableOpacity
+                    style={{ marginRight: 8, marginLeft: 0, padding: 2 }}
+                    onPress={(e) => {
+                      e.stopPropagation && e.stopPropagation();
+                      abrirModalCompartilhar(item);
+                    }}
+                  >
+                    <MaterialIcons name="share" size={22} color="#8B4513" />
                   </TouchableOpacity>
                   <Text style={styles.expandIcon}>{expanded === item.id_tarefa ? '-' : '+'}</Text>
                 </TouchableOpacity>

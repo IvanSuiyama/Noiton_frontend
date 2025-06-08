@@ -129,12 +129,30 @@ export default function TelaPrincipal() {
         if (!resp.ok) throw new Error();
         const data = await resp.json();
         // Filtra tarefas que não têm id_rotina (ou campo similar, ajuste conforme seu backend)
-        const comuns = Array.isArray(data)
+        let comuns = Array.isArray(data)
           ? data.filter((t: any) => !t.id_rotina && !t.id_pai)
           : [];
+        // Remove duplicatas por id_tarefa (forçando string)
+        const seen = new Set<string>();
+        const comunsUnicas: typeof comuns = [];
+        for (const t of comuns) {
+          const idStr = String(t.id_tarefa);
+          if (!seen.has(idStr)) {
+            seen.add(idStr);
+            comunsUnicas.push(t);
+          }
+        }
         // Ordena por data_inicio decrescente e pega as 3 mais recentes
-        comuns.sort((a: any, b: any) => new Date(b.data_inicio).getTime() - new Date(a.data_inicio).getTime());
-        setTarefasRecentes(comuns.slice(0, 3));
+        comunsUnicas.sort((a: any, b: any) => new Date(b.data_inicio).getTime() - new Date(a.data_inicio).getTime());
+        // Loga ids e chaves para depuração
+        const ids = comunsUnicas.map(t => String(t.id_tarefa));
+        const duplicados = ids.filter((id, idx) => ids.indexOf(id) !== idx);
+        if (duplicados.length > 0) {
+          console.warn('IDs de tarefas recentes duplicados detectados:', duplicados);
+        }
+        const renderKeys = comunsUnicas.map((t, idx) => `tarefa_${t.id_tarefa}_${idx}`);
+        console.log('Chaves usadas para renderização das tarefas recentes:', renderKeys);
+        setTarefasRecentes(comunsUnicas.slice(0, 3));
       } catch {
         setTarefasRecentes([]);
       }
@@ -218,7 +236,7 @@ export default function TelaPrincipal() {
           ) : (
             tarefasRecentes.map((tarefa, idx) => (
               <TouchableOpacity
-                key={`tarefa_${tarefa.id_tarefa ?? idx}`}
+                key={`tarefa_${tarefa.id_tarefa}_${idx}`}
                 style={styles.tarefaItem}
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate('DetalhesTarefa', { tarefa })}

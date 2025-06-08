@@ -128,6 +128,23 @@ export default function Login() {
             >
               <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{t.entrar}</Text>
             </TouchableOpacity>
+            {/* Botão de cadastrar */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 5,
+                paddingVertical: 12,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: '#8B4513',
+                marginBottom: 8,
+              }}
+              onPress={() => navigation.navigate('CriaUsuario')}
+            >
+              <Text style={{ color: '#8B4513', fontWeight: 'bold', fontSize: 16 }}>
+                {isEnglish ? 'Register' : 'Cadastrar'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
