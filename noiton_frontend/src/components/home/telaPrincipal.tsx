@@ -12,6 +12,7 @@ import type { RootStackParamList } from '@/routes/Route';
 import { useIsFocused } from '@react-navigation/native';
 import { useLanguage } from '@/context/LanguageContext';
 import { useMonitorarTarefasVencimentoDetalhado } from '../notification/NotificationManager';
+import ProgressoTarefas from '../tarefa/ProgressoTarefas';
 
 export default function TelaPrincipal() {
   const [isPopUpVisible, setPopUpVisible] = useState(false);
@@ -187,6 +188,9 @@ export default function TelaPrincipal() {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Espaço para afastar do topo/fixar containers abaixo dos ícones */}
         <View style={{ height: 90 }} />
+
+        {/* Barra de Progresso de Tarefas */}
+        <ProgressoTarefas />
 
         {/* Calendário e dia da semana destacado */}
         <View style={styles.calendarioDiaSemanaRow}>

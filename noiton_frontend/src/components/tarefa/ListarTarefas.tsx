@@ -3,14 +3,15 @@ import { View, Text, Alert, StyleSheet, FlatList, TouchableOpacity, LayoutAnimat
 import { Tarefa } from '../../models/Tarefa';
 import { IP_WIFI, IP_CELULAR } from '@env';
 import { useAuth } from '@/context/ApiContext';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import type { RootStackParamList } from '@/routes/Route';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLanguage } from '@/context/LanguageContext';
 import * as Calendar from 'expo-calendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserContext } from '@/context/UserContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Habilita animação no Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -429,6 +430,13 @@ export default function ListarTarefas() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
+      {/* Botão Voltar para Tela Principal */}
+      <TouchableOpacity
+        style={{ margin: 12, alignSelf: 'flex-start', backgroundColor: '#8B4513', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 18 }}
+        onPress={() => navigation.navigate('TelaPrincipal')}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{isEnglish ? 'Back' : 'Voltar'}</Text>
+      </TouchableOpacity>
       {/* Modal de Compartilhar */}
       <Modal
         visible={modalVisible}

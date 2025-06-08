@@ -319,6 +319,14 @@ export default function CriaTarefa() {
     <View style={{ flex: 1, backgroundColor: '#f5f5dc' }}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
+          {/* Botão Voltar para Tela Principal */}
+          <TouchableOpacity
+            style={{ margin: 12, alignSelf: 'flex-start', backgroundColor: '#8B4513', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 18 }}
+            onPress={() => navigation.navigate('TelaPrincipal')}
+          >
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{isEnglish ? 'Back' : 'Voltar'}</Text>
+          </TouchableOpacity>
+
           <Text style={[styles.label, { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 }]}>{t.title}</Text>
           <Text style={styles.label}>{t.titulo}</Text>
           <TextInput
