@@ -11,6 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
 import { useIsFocused } from '@react-navigation/native';
 import { useLanguage } from '@/context/LanguageContext';
+import { useMonitorarTarefasVencimentoDetalhado } from '../notification/NotificationManager';
 
 export default function TelaPrincipal() {
   const [isPopUpVisible, setPopUpVisible] = useState(false);
@@ -140,6 +141,8 @@ export default function TelaPrincipal() {
     };
     fetchTarefas();
   }, [token, userCpf]);
+
+  useMonitorarTarefasVencimentoDetalhado();
 
   return (
     <View style={styles.container}>

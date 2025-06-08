@@ -10,6 +10,9 @@ import { useAuth } from '@/context/ApiContext';
 import { useLanguage } from '@/context/LanguageContext';
 import * as Calendar from 'expo-calendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useMonitorarTarefasVencimentoDetalhado } from '../notification/NotificationManager';
+import { monitorarTarefasVencimentoDetalhadoNow } from '../notification/NotificationManager';
+import { useUserContext } from '@/context/UserContext';
 
 const Footer = () => (
   <View style={{ backgroundColor: '#8B4513', height: 38 }} />
@@ -28,7 +31,9 @@ export default function CriaTarefa() {
   const [ehRecorrente, setEhRecorrente] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { token, isAuthenticated, logout } = useAuth();
+  const { userCpf } = useUserContext();
   const isFocused = useIsFocused();
+  useMonitorarTarefasVencimentoDetalhado();
 
   // Traduções dos textos
   const translations = {
@@ -287,14 +292,10 @@ export default function CriaTarefa() {
         await saveEventId(tarefaId, eventId);
       }
       Alert.alert('Sucesso', 'Tarefa criada com sucesso!');
-      setTitulo('');
-      setConteudo('');
-      setDataFim(null);
-      setIsDataFimEnabled(false);
-      setPrioridade('media');
-      setCategoria(null);
-      setCategoriasSelecionadas([]); // Limpa categorias selecionadas
-      // Redireciona para a tela principal após criar tarefa
+      // Executa monitoramento imediatamente após criar tarefa
+      if (token && userCpf) {
+        await monitorarTarefasVencimentoDetalhadoNow(token, userCpf);
+      }
       navigation.navigate('TelaPrincipal');
     } catch (error) {
       console.error('Erro inesperado ao criar tarefa:', error);

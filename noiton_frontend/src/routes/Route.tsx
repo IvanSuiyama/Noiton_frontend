@@ -23,6 +23,7 @@ export type RootStackParamList = {
   CriaCategoria: undefined;
   ListarCategoria: undefined;
   ListarTarefas: undefined;
+  ListarNotificacoes: undefined;
   CriaUsuario: undefined;
   EditaUsuario: undefined;
   EditaTarefa: { id_tarefa: number };
@@ -46,6 +47,7 @@ export default function AppRoutes() {
           <Stack.Screen name="CriaCategoria" component={CriaCategoria} />
           <Stack.Screen name="ListarCategoria" component={ListarCategoria} />
           <Stack.Screen name="ListarTarefas" component={ListarTarefas} />
+          <Stack.Screen name="ListarNotificacoes" component={require('@/components/notification/ListarNotificacoes').default} />
           <Stack.Screen name="CriaUsuario" component={CriaUsuario} />
           <Stack.Screen name="EditaUsuario" component={EditaUsuario} />
           <Stack.Screen name="EditaTarefa" component={EditaTarefa} />
