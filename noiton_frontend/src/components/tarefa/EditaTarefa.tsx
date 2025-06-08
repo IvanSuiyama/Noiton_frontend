@@ -40,28 +40,32 @@ export default function EditaTarefa() {
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<number[]>([]);
   const [eventId, setEventId] = useState<string | null>(null);
 
+  const idPai = (route as any)?.params?.id_pai !== undefined ? (route as any)?.params?.id_pai : null;
+
   const translations = {
     pt: {
-      title: 'Editar Tarefa',
+      title: idPai ? 'Editar Subtarefa' : 'Editar Tarefa',
       titulo: 'Título',
       conteudo: 'Conteúdo',
       prazoFinal: 'Prazo Final',
       prioridade: 'Prioridade',
       categoria: 'Categoria',
-      salvar: 'Salvar',
+      salvar: idPai ? 'Salvar Subtarefa' : 'Salvar',
       status: 'Status',
       inicio: 'Início',
+      sucesso: idPai ? 'Subtarefa atualizada com sucesso!' : 'Tarefa atualizada com sucesso!',
     },
     en: {
-      title: 'Edit Task',
+      title: idPai ? 'Edit Subtask' : 'Edit Task',
       titulo: 'Title',
       conteudo: 'Content',
       prazoFinal: 'Due Date',
       prioridade: 'Priority',
       categoria: 'Category',
-      salvar: 'Save',
+      salvar: idPai ? 'Save Subtask' : 'Save',
       status: 'Status',
       inicio: 'Start',
+      sucesso: idPai ? 'Subtask updated successfully!' : 'Task updated successfully!',
     }
   };
   const t = isEnglish ? translations.en : translations.pt;
@@ -282,6 +286,7 @@ export default function EditaTarefa() {
       prioridade: prioridade as 'baixa' | 'media' | 'alta',
       categorias: categoriasSelecionadas.map(id => ({ id_categoria: id })),
       eventId: novoEventId,
+      id_pai: idPai !== null ? idPai : null, // Sempre envia id_pai
     };
 
     try {
@@ -310,7 +315,7 @@ export default function EditaTarefa() {
         Alert.alert('Tarefa concluída!', 'O evento do calendário foi removido.');
       }
 
-      Alert.alert('Sucesso', 'Tarefa atualizada com sucesso!');
+      Alert.alert('Sucesso', t.sucesso);
       navigation.goBack();
     } catch (error) {
       Alert.alert('Erro', error instanceof Error ? error.message : 'Erro ao atualizar tarefa');

@@ -284,6 +284,51 @@ export default function DetalhesTarefa() {
               <View key={sub.id_tarefa} style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, marginBottom: 6, borderColor: '#8B4513', borderWidth: 1 }}>
                 <Text style={{ fontWeight: 'bold', color: '#8B4513' }}>{sub.titulo}</Text>
                 <Text style={{ color: '#8B4513' }}>{sub.status}</Text>
+                <View style={{ flexDirection: 'row', marginTop: 8, gap: 8 }}>
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#e0e0e0', borderRadius: 4, paddingVertical: 6, paddingHorizontal: 12, marginRight: 8 }}
+                    onPress={() => navigation.navigate('DetalhesTarefa', { tarefa: sub })}
+                  >
+                    <Text style={{ color: '#8B4513', fontWeight: 'bold' }}>{isEnglish ? 'View details' : 'Ver mais'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#ffe4b5', borderRadius: 4, paddingVertical: 6, paddingHorizontal: 12, marginRight: 8 }}
+                    onPress={() => navigation.navigate('EditaTarefa', { id_tarefa: sub.id_tarefa })}
+                  >
+                    <Text style={{ color: '#8B4513', fontWeight: 'bold' }}>{isEnglish ? 'Edit' : 'Editar'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#ffcccc', borderRadius: 4, paddingVertical: 6, paddingHorizontal: 12 }}
+                    onPress={() => {
+                      Alert.alert(
+                        isEnglish ? 'Delete subtask' : 'Excluir subtarefa',
+                        isEnglish ? 'Are you sure you want to delete this subtask?' : 'Tem certeza que deseja excluir esta subtarefa?',
+                        [
+                          { text: isEnglish ? 'Cancel' : 'Cancelar', style: 'cancel' },
+                          {
+                            text: isEnglish ? 'Delete' : 'Excluir',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                const resp = await fetch(`${process.env.IP_CELULAR || ''}/api/tarefa/${sub.id_tarefa}`, {
+                                  method: 'DELETE',
+                                  headers: { 'Authorization': `Bearer ${token}` },
+                                });
+                                if (!resp.ok) throw new Error('Delete failed');
+                                setSubtarefas((prev) => prev.filter((s) => s.id_tarefa !== sub.id_tarefa));
+                                Alert.alert(isEnglish ? 'Subtask deleted!' : 'Subtarefa excluída!');
+                              } catch {
+                                Alert.alert(isEnglish ? 'Error deleting subtask' : 'Erro ao excluir subtarefa');
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Text style={{ color: 'red', fontWeight: 'bold' }}>{isEnglish ? 'Delete' : 'Excluir'}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}

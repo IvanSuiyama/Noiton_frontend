@@ -29,6 +29,7 @@ export default function CriaUsuario() {
       senha: 'Senha',
       telefone: 'Telefone',
       criar: 'Criar Usuário',
+      placeholderCPF: 'Digite o CPF',
       placeholderNome: 'Digite o nome',
       placeholderEmail: 'Digite o e-mail',
       placeholderSenha: 'Digite a senha',
@@ -42,6 +43,7 @@ export default function CriaUsuario() {
       senha: 'Password',
       telefone: 'Phone',
       criar: 'Create User',
+      placeholderCPF: 'Enter CPF',
       placeholderNome: 'Enter name',
       placeholderEmail: 'Enter email',
       placeholderSenha: 'Enter password',
@@ -147,7 +149,7 @@ export default function CriaUsuario() {
         <Text style={styles.label}>{t.cpf}</Text>
         <TextInput
           style={styles.input}
-          placeholder={t.placeholderNome}
+          placeholder={t.placeholderCPF}
           value={cpf}
           onChangeText={setCpf}
           keyboardType="numeric"
