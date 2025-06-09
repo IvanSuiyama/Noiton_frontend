@@ -110,19 +110,11 @@ export default function ProgressoTarefas() {
         14,
         75
       );
-      // Salva PDF em arquivo temporário
-      const pdfOutput = doc.output('blob');
+      // Gera PDF em base64 e salva
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
       const fileUri = FileSystem.cacheDirectory + `progresso_tarefas_${periodo}_${Date.now()}.pdf`;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
-        await Sharing.shareAsync(fileUri, { mimeType: 'application/pdf' });
-      };
-      reader.onerror = () => {
-        Alert.alert(isEnglish ? 'Error' : 'Erro', isEnglish ? 'Failed to generate PDF.' : 'Falha ao gerar PDF.');
-      };
-      reader.readAsDataURL(pdfOutput);
+      await FileSystem.writeAsStringAsync(fileUri, pdfBase64, { encoding: FileSystem.EncodingType.Base64 });
+      await Sharing.shareAsync(fileUri, { mimeType: 'application/pdf' });
     } catch (e) {
       Alert.alert(isEnglish ? 'Error' : 'Erro', isEnglish ? 'Failed to generate PDF.' : 'Falha ao gerar PDF.');
     }

@@ -94,22 +94,28 @@ export default function TelaPrincipal() {
         });
         if (!resp.ok) throw new Error();
         const data = await resp.json();
-        // Filtra rotinas ativas, não expiradas e que tenham o dia da semana de hoje
+        // Filtra rotinas ativas, não expiradas, que tenham o dia da semana de hoje e já estejam criadas (data_criacao <= hoje)
         const hojeDate = new Date();
         const hojeISO = hojeDate.toISOString().slice(0, 10); // yyyy-mm-dd
         let rotinasHoje = Array.isArray(data)
-          ? data.filter((r) =>
-              r.ativa &&
-              (!r.data_fim || r.data_fim >= hojeISO) &&
-              typeof r.dias_semana === 'string' &&
-              r.dias_semana.split(',').map((s: string) => s.trim().toLowerCase()).includes(diaSemanaApi)
-            )
+          ? data.filter((r) => {
+              if (!r.ativa) return false;
+              if (r.data_fim && r.data_fim < hojeISO) return false;
+              if (typeof r.dias_semana !== 'string') return false;
+              const dias = (r.dias_semana as string).split(',').map((s: string) => s.trim().toLowerCase());
+              if (!dias.includes(diaSemanaApi)) return false;
+              // Considera rotina criada hoje: data_criacao <= hoje
+              const dataCriacao = r.data_criacao || r.data_inicio || r.createdAt;
+              if (dataCriacao) {
+                const dataCriacaoISO = new Date(dataCriacao).toISOString().slice(0, 10);
+                if (dataCriacaoISO > hojeISO) return false;
+              }
+              return true;
+            })
           : [];
         // Remove duplicadas por id_rotina
         rotinasHoje = rotinasHoje.filter(
-          (r, idx, arr) =>
-            r.id_rotina != null &&
-            arr.findIndex(x => x.id_rotina === r.id_rotina) === idx
+          (r, idx, arr) => r.id_rotina != null && arr.findIndex(x => x.id_rotina === r.id_rotina) === idx
         );
         setRotinasHoje(rotinasHoje);
       } catch {
@@ -165,27 +171,26 @@ export default function TelaPrincipal() {
 
   return (
     <View style={styles.container}>
-      {/* Menu Sanduíche */}
-      <HamburgerMenu />
-      {/* Ícone de Avatar */}
-      <TouchableOpacity style={styles.avatarButton} onPress={handleAvatarPress}>
-        <MaterialIcons name="account-circle" size={40} color="#000" />
-      </TouchableOpacity>
-      {/* Botão de Troca de Idioma */}
-      <TouchableOpacity 
-        style={styles.languageButton}
-        onPress={() => setIsEnglish(!isEnglish)}
-      >
-        <Text style={styles.languageButtonText}>
-          {isEnglish ? "PT" : "EN"}
-        </Text>
-      </TouchableOpacity>
-      {/* PopUpUser */}
-      <PopUpUser visible={isPopUpVisible} onClose={() => setPopUpVisible(false)} />
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Menu Sanduíche */}
+        <HamburgerMenu />
+        {/* Cabeçalho de ícones (avatar e idioma) */}
+        <View style={styles.headerIcons}>
+          <TouchableOpacity 
+            style={styles.languageButton}
+            onPress={() => setIsEnglish(!isEnglish)}
+          >
+            <Text style={styles.languageButtonText}>
+              {isEnglish ? "PT" : "EN"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.avatarButton} onPress={handleAvatarPress}>
+            <MaterialIcons name="account-circle" size={40} color="#000" />
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Espaço para afastar do topo/fixar containers abaixo dos ícones */}
-        <View style={{ height: 90 }} />
+        <View style={{ height: 20 }} />
 
         {/* Barra de Progresso de Tarefas */}
         <ProgressoTarefas />
@@ -263,7 +268,13 @@ export default function TelaPrincipal() {
           <Text style={styles.dicaTitle}>{isEnglish ? translations.en.dailyTip : translations.pt.dailyTip}</Text>
           <Text style={styles.dicaText}>{dicas[dicaIndex]}</Text>
         </View>
+        {/* Espaço extra para garantir scroll até o final */}
+        <View style={{ height: 90 }} />
       </ScrollView>
+      {/* Rodapé para cobrir botões de navegação do Android */}
+      <View style={styles.androidFooter} />
+      {/* PopUpUser permanece fora do ScrollView */}
+      <PopUpUser visible={isPopUpVisible} onClose={() => setPopUpVisible(false)} />
     </View>
   );
 }
@@ -279,17 +290,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5dc',
     minHeight: '100%',
   },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 48, // reduzido para alinhar verticalmente com o menu
+    height: 48, // altura fixa para alinhar centro
+    marginBottom: 0,
+  },
   avatarButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 10,
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 48, // igual ao headerIcons
   },
   languageButton: {
-    position: 'absolute',
-    top: 70, // ajustado para ficar abaixo do avatar (avatar 40px + 10px margem)
-    right: 20,
-    zIndex: 9,
     backgroundColor: '#fffbe6',
     borderColor: '#8B4513',
     borderWidth: 1.5,
@@ -302,41 +318,50 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
+    height: 36, // altura para centralizar texto
+    marginTop: 0,
   },
   languageButtonText: {
     color: '#8B4513',
     fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 1,
+    textAlignVertical: 'center',
+    height: 36, // igual ao botão para centralizar
+    lineHeight: 36, // centraliza verticalmente
   },
   dicaContainer: {
-    backgroundColor: '#f5ecd2', // igual aos outros containers
-    borderRadius: 10,
+    backgroundColor: '#fffbe6', // fundo mais claro e suave
+    borderRadius: 16, // mais arredondado
     marginHorizontal: 20,
     marginBottom: 18,
-    marginTop: 30,
-    padding: 14,
+    marginTop: 18, // menos espaço superior
+    paddingVertical: 22, // mais espaçamento interno
+    paddingHorizontal: 18,
     borderWidth: 1,
-    borderColor: '#8B4513', // igual aos outros containers
+    borderColor: '#e6c200', // borda mais suave
     shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowOpacity: 0.07, // sombra mais sutil
+    shadowRadius: 8,
+    elevation: 2,
     alignItems: 'center',
-    minHeight: 70,
     justifyContent: 'center',
+    minHeight: 80,
   },
   dicaTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: '#8B4513', // igual aos outros títulos
-    marginBottom: 4,
+    color: '#bfa100', // cor mais suave
+    marginBottom: 6,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   dicaText: {
-    fontSize: 15,
-    color: '#8B4513', // igual aos outros textos
+    fontSize: 15.5,
+    color: '#8B4513',
     textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: '500',
   },
   calendarioDiaSemanaRow: {
     flexDirection: 'row',
@@ -445,6 +470,11 @@ const styles = StyleSheet.create({
   tarefaData: {
     color: '#8B4513',
     fontSize: 13,
+  },
+  androidFooter: {
+    height: 32,
+    backgroundColor: '#8B4513', // marrom dos botões
+    width: '100%',
   },
   // Removidos: criarTarefaContainer, criarTarefaMsg, criarTarefaButton, criarTarefaButtonText, welcomeContainer, welcomeRow, welcomeText
 });
