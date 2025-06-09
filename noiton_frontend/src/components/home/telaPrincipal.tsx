@@ -167,13 +167,11 @@ export default function TelaPrincipal() {
     <View style={styles.container}>
       {/* Menu Sanduíche */}
       <HamburgerMenu />
-
       {/* Ícone de Avatar */}
       <TouchableOpacity style={styles.avatarButton} onPress={handleAvatarPress}>
         <MaterialIcons name="account-circle" size={40} color="#000" />
       </TouchableOpacity>
-
-      {/* Botão de Troca de Idioma - agora abaixo do avatar */}
+      {/* Botão de Troca de Idioma */}
       <TouchableOpacity 
         style={styles.languageButton}
         onPress={() => setIsEnglish(!isEnglish)}

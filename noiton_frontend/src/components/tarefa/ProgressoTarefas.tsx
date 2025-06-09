@@ -5,10 +5,8 @@ import { useUserContext } from '@/context/UserContext';
 import { IP_CELULAR } from '@env';
 import { useLanguage } from '@/context/LanguageContext';
 import * as FileSystem from 'expo-file-system';
-import { jsPDF } from 'jspdf';
-import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
-import { Picker } from '@react-native-picker/picker';
+import { jsPDF } from 'jspdf';
 
 // Barra de progresso simples
 function ProgressBar({ progress }: { progress: number }) {
@@ -19,112 +17,84 @@ function ProgressBar({ progress }: { progress: number }) {
   );
 }
 
+type Periodo = 'dia' | 'mes' | 'ano';
+
 export default function ProgressoTarefas() {
   const { token } = useAuth();
   const { userCpf } = useUserContext();
   const { isEnglish } = useLanguage();
+  const [periodo, setPeriodo] = useState<Periodo>('dia');
   const [total, setTotal] = useState(0);
   const [concluidas, setConcluidas] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Estado para data customizada
-  const [periodo, setPeriodo] = useState<'dia' | 'mes' | 'ano'>('dia');
-
   const labels = {
     pt: {
+      dia: 'Dia', mes: 'Mês', ano: 'Ano',
       tarefas: 'tarefas concluídas',
       de: 'de',
     },
     en: {
+      dia: 'Day', mes: 'Month', ano: 'Year',
       tarefas: 'tasks completed',
       de: 'of',
     }
   };
   const t = isEnglish ? labels.en : labels.pt;
 
-  // Remove o input de data, sempre usa o valor atual do sistema
-  // Função para parsear a data do input (agora ignora dataInput)
-  function parseDataInput() {
+  // Calcula datas de início/fim do período
+  function getPeriodoRange(periodo: Periodo) {
     const now = new Date();
     if (periodo === 'dia') {
-      return { dia: now.getDate(), mes: now.getMonth() + 1, ano: now.getFullYear() };
-    } else if (periodo === 'mes') {
-      return { mes: now.getMonth() + 1, ano: now.getFullYear() };
-    } else if (periodo === 'ano') {
-      return { ano: now.getFullYear() };
-    }
-    return { dia: 1, mes: 1, ano: 1970 };
-  }
-
-  // Calcula datas de início/fim do período baseado no valor atual
-  function getPeriodoRange(periodo: 'dia' | 'mes' | 'ano') {
-    const { dia = 1, mes = 1, ano = 1970 } = parseDataInput();
-    if (periodo === 'dia') {
-      const start = new Date(ano, mes - 1, dia);
-      const end = new Date(ano, mes - 1, dia + 1);
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
       return { start, end };
     } else if (periodo === 'mes') {
-      const start = new Date(ano, mes - 1, 1);
-      const end = new Date(ano, mes, 1);
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       return { start, end };
-    } else if (periodo === 'ano') {
-      const start = new Date(ano, 0, 1);
-      const end = new Date(ano + 1, 0, 1);
+    } else {
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear() + 1, 0, 1);
       return { start, end };
     }
-    return { start: new Date(), end: new Date() };
-  }
-
-  // Função para pegar só a parte da data (yyyy-mm-dd) e criar Date local
-  function parseBackendDate(str: string) {
-    if (!str) return null;
-    // Aceita formatos 'yyyy-mm-dd' ou 'yyyy-mm-dd hh:mm:ss'
-    const [datePart] = str.split(' ');
-    const [ano, mes, dia] = datePart.split('-').map(Number);
-    if (!ano || !mes || !dia) return null;
-    return new Date(ano, mes - 1, dia, 0, 0, 0, 0);
   }
 
   useEffect(() => {
-    const fetchProgresso = async () => {
+    const fetchTarefas = async () => {
       if (!token || !userCpf) return;
       setLoading(true);
       try {
-        const resp = await fetch(`${IP_CELULAR}/api/usuario/progresso?cpf=${userCpf}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const resp = await fetch(`${IP_CELULAR}/api/tarefa/list?cpf=${userCpf}`,
+          { headers: { Authorization: `Bearer ${token}` } });
         if (!resp.ok) throw new Error();
         const data = await resp.json();
         const { start, end } = getPeriodoRange(periodo);
-        // datas_criacao, status_tarefas são arrays paralelos
-        let total = 0;
-        let concluidas = 0;
-        for (let i = 0; i < (data.datas_criacao || []).length; i++) {
-          const criacao = parseBackendDate(data.datas_criacao[i]);
-          if (!criacao) continue;
-          if (criacao >= start && criacao < end) {
-            total++;
-            if (data.status_tarefas && data.status_tarefas[i] === 'concluida') {
-              concluidas++;
-            }
-          }
-        }
-        setTotal(total);
-        setConcluidas(concluidas);
+        // Filtra tarefas do período
+        const tarefasPeriodo = Array.isArray(data)
+          ? data.filter((t: any) => {
+              if (!t.data_inicio) return false;
+              const d = new Date(t.data_inicio);
+              return d >= start && d < end && !t.id_pai;
+            })
+          : [];
+        setTotal(tarefasPeriodo.length);
+        setConcluidas(tarefasPeriodo.filter((t: any) => t.status === 'concluido').length);
       } catch {
         setTotal(0); setConcluidas(0);
       } finally {
         setLoading(false);
       }
     };
-    fetchProgresso();
+    fetchTarefas();
   }, [token, userCpf, periodo]);
 
   // Função para gerar e salvar PDF do progresso
   const handleGerarPdf = async () => {
     try {
       const doc = new jsPDF();
-      const periodoLabel = t.de.toUpperCase();
+      const periodoLabel = t[periodo].toUpperCase();
       doc.setFontSize(18);
       doc.text(isEnglish ? 'Task Progress Report' : 'Relatório de Progresso de Tarefas', 14, 20);
       doc.setFontSize(13);
@@ -140,35 +110,41 @@ export default function ProgressoTarefas() {
         14,
         75
       );
-      // Gera o PDF em base64 (compatível com React Native)
-      const pdfBase64 = doc.output('datauristring').split(',')[1];
-      const fileName = `progresso_tarefas_${Date.now()}.pdf`;
-      const fileUri = FileSystem.documentDirectory + fileName;
-      await FileSystem.writeAsStringAsync(fileUri, pdfBase64, { encoding: FileSystem.EncodingType.Base64 });
-      // Abre o diálogo de compartilhamento para o usuário escolher onde salvar
-      await Sharing.shareAsync(fileUri, { mimeType: 'application/pdf' });
+      // Salva PDF em arquivo temporário
+      const pdfOutput = doc.output('blob');
+      const fileUri = FileSystem.cacheDirectory + `progresso_tarefas_${periodo}_${Date.now()}.pdf`;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+        await Sharing.shareAsync(fileUri, { mimeType: 'application/pdf' });
+      };
+      reader.onerror = () => {
+        Alert.alert(isEnglish ? 'Error' : 'Erro', isEnglish ? 'Failed to generate PDF.' : 'Falha ao gerar PDF.');
+      };
+      reader.readAsDataURL(pdfOutput);
     } catch (e) {
       Alert.alert(isEnglish ? 'Error' : 'Erro', isEnglish ? 'Failed to generate PDF.' : 'Falha ao gerar PDF.');
     }
   };
 
-  // UI para seleção de período (sem input de data)
-  const periodos: Array<'dia' | 'mes' | 'ano'> = ['dia', 'mes', 'ano'];
+  // Alternância de período: Dia/Mês/Ano
+  const periodos: Periodo[] = ['dia', 'mes', 'ano'];
 
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
         <Text style={styles.titulo}>{isEnglish ? 'Progress' : 'Progresso'}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={styles.switchRow}>
             {periodos.map((p) => (
               <TouchableOpacity
                 key={p}
                 style={[styles.switchButton, periodo === p && styles.switchButtonAtivo]}
-                onPress={() => setPeriodo(p as 'dia' | 'mes' | 'ano')}
+                onPress={() => setPeriodo(p)}
               >
                 <Text style={[styles.switchButtonText, periodo === p && styles.switchButtonTextAtivo]}>
-                  {p === 'dia' ? (isEnglish ? 'Day' : 'Dia') : p === 'mes' ? (isEnglish ? 'Month' : 'Mês') : (isEnglish ? 'Year' : 'Ano')}
+                  {t[p]}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -182,7 +158,6 @@ export default function ProgressoTarefas() {
           </TouchableOpacity>
         </View>
       </View>
-      {/* Sem input de data, só mostra progresso */}
       <View style={styles.progressInfoRow}>
         {loading ? (
           <Text style={styles.progressInfoText}>...</Text>
@@ -229,6 +204,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#8B4513',
   },
+  switchRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  switchButton: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#8B4513',
+    marginLeft: 4,
+  },
+  switchButtonAtivo: {
+    backgroundColor: '#8B4513',
+  },
+  switchButtonText: {
+    color: '#8B4513',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  switchButtonTextAtivo: {
+    color: '#fff',
+  },
   progressInfoRow: {
     marginBottom: 8,
     marginTop: 2,
@@ -264,26 +263,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
     letterSpacing: 1,
-  },
-  switchButton: {
-    backgroundColor: '#f7f3e6',
-    borderColor: '#8B4513',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  switchButtonAtivo: {
-    backgroundColor: '#8B4513',
-  },
-  switchButtonText: {
-    color: '#8B4513',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  switchButtonTextAtivo: {
-    color: '#fff',
   },
 });
