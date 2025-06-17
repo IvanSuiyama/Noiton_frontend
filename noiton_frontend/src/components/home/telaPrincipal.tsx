@@ -3,7 +3,6 @@ import { StyleSheet, View, Text, TouchableOpacity, Alert, ScrollView } from 'rea
 import { MaterialIcons } from '@expo/vector-icons';
 import HamburgerMenu from '../menu/HamburguerMenu';
 import PopUpUser from './PopUpUser';
-import { IP_CELULAR } from '@env';
 import { useAuth } from '@/context/ApiContext';
 import { useUserContext } from '@/context/UserContext';
 import { useNavigation } from '@react-navigation/native';
@@ -89,7 +88,7 @@ export default function TelaPrincipal() {
     const fetchRotinas = async () => {
       if (!token || !userCpf) return;
       try {
-        const resp = await fetch(`${IP_CELULAR}/api/rotinas?cpf=${userCpf}`, {
+        const resp = await fetch(`http://192.168.95.119:4000/api/rotinas?cpf=${userCpf}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!resp.ok) throw new Error();
@@ -130,7 +129,7 @@ export default function TelaPrincipal() {
     const fetchTarefas = async () => {
       if (!token || !userCpf) return;
       try {
-        const resp = await fetch(`${IP_CELULAR}/api/tarefa/list`, {
+        const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/list`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!resp.ok) throw new Error();

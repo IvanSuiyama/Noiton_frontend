@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, Alert, StyleSheet, FlatList, TouchableOpacity, LayoutAnimation, Platform, UIManager, ScrollView, Button, TextInput, Modal } from 'react-native';
 import { Tarefa } from '../../models/Tarefa';
-import { IP_WIFI, IP_CELULAR } from '@env';
 import { useAuth } from '@/context/ApiContext';
 import { useNavigation } from '@react-navigation/native';
 import type { RootStackParamList } from '@/routes/Route';
@@ -87,7 +86,7 @@ export default function ListarTarefas() {
       params.append('cpf', userCpf); // <-- filtro pelo usuário logado
       if (filtros.prazoFinal) params.append('prazoFinal', filtros.prazoFinal);
       if (filtros.semPrazo) params.append('semPrazo', 'true');
-      const url = `${IP_CELULAR}/api/tarefa/list${params.toString() ? '?' + params.toString() : ''}`;
+      const url = `http://192.168.95.119:4000/api/tarefa/list${params.toString() ? '?' + params.toString() : ''}`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -120,11 +119,11 @@ export default function ListarTarefas() {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        let response = await fetch(`${IP_CELULAR}/api/categorialist`, {
+        let response = await fetch(`http://192.168.95.119:4000/api/categorialist`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) {
-          response = await fetch(`${IP_WIFI}/api/categoria/list`, {
+          response = await fetch(`http://192.168.95.119:4000/api/categoria/list`, {
             headers: { Authorization: `Bearer ${token}` },
           });
         }
@@ -153,7 +152,7 @@ export default function ListarTarefas() {
       if (eventId) {
         await removerEventoCalendario(eventId, id);
       }
-      const response = await fetch(`${IP_CELULAR}/api/tarefa/${id}`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/tarefa/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -200,7 +199,7 @@ export default function ListarTarefas() {
         ...tarefaAtual,
         status: value ? 'concluido' : 'pendente',
       };
-      const response = await fetch(`${IP_CELULAR}/api/tarefa/${tarefaId}`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/tarefa/${tarefaId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +388,7 @@ export default function ListarTarefas() {
     setLoadingCompartilhar(true);
     try {
       const emailLimpo = emailCompartilhar.trim().toLowerCase();
-      const url = `${IP_CELULAR}/api/usuario/por-email/${encodeURIComponent(emailLimpo)}`;
+      const url = `http://192.168.95.119:4000/api/usuario/por-email/${encodeURIComponent(emailLimpo)}`;
       console.log('Buscando usuário por e-mail:', url);
       const resp = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -405,7 +404,7 @@ export default function ListarTarefas() {
       }
       const usuario = JSON.parse(respText);
       if (!usuario || !usuario.cpf) throw new Error(isEnglish ? 'User not found' : 'Usuário não encontrado');
-      const resp2 = await fetch(`${IP_CELULAR}/api/tarefa/compartilhar`, {
+      const resp2 = await fetch(`http://192.168.95.119:4000/api/tarefa/compartilhar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -485,7 +484,12 @@ export default function ListarTarefas() {
             <Text style={styles.emptyText}>{t.nenhumaTarefa}</Text>
           ) : (
             tarefasUnicas.map((item, idx) => (
-              <View key={`tarefa_${item.id_tarefa}_${idx}`} style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]}> 
+              // @ts-ignore
+              <View
+                key={`tarefa_${item.id_tarefa}_${idx}`}
+                style={[styles.cardContainer, item.status === 'concluido' && { opacity: 0.5 }]
+                }
+              >
                 <TouchableOpacity
                   style={styles.cardHeader}
                   onPress={() => handleExpand(item.id_tarefa)}

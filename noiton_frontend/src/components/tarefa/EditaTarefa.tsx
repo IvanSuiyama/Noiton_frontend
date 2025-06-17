@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
 import { useAuth } from '@/context/ApiContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { IP_WIFI, IP_CELULAR } from '@env';
 import * as Calendar from 'expo-calendar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -81,11 +80,11 @@ export default function EditaTarefa() {
             Alert.alert('Erro', 'ID da tarefa não informado.');
             return;
           }
-          let response = await fetch(`${IP_CELULAR}/api/tarefa/${route.params.id_tarefa}`, {
+          let response = await fetch(`http://192.168.95.119:4000/api/tarefa/${route.params.id_tarefa}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (!response.ok) {
-            response = await fetch(`${IP_WIFI}/api/tarefa/${route.params.id_tarefa}`, {
+            response = await fetch(`http://192.168.95.119:4000/api/tarefa/${route.params.id_tarefa}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
           }
@@ -122,11 +121,11 @@ export default function EditaTarefa() {
 
       const fetchCategorias = async () => {
         try {
-          let response = await fetch(`${IP_CELULAR}/api/categorialist`, {
+          let response = await fetch(`http://192.168.95.119:4000/api/categorialist`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (!response.ok) {
-            response = await fetch(`${IP_WIFI}/api/categorialist`, {
+            response = await fetch(`http://192.168.95.119:4000/api/categorialist`, {
               headers: { Authorization: `Bearer ${token}` },
             });
           }
@@ -290,7 +289,7 @@ export default function EditaTarefa() {
     };
 
     try {
-      const response = await fetch(`${IP_CELULAR}/api/tarefa/${route.params.id_tarefa}`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/tarefa/${route.params.id_tarefa}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

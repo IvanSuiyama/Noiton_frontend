@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import Categoria from '@/models/Categoria';
-import { IP_CELULAR, IP_WIFI } from '@env'; // Importa a variável do .env
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/routes/Route'; // Certifique-se que o caminho está correto
@@ -47,7 +46,7 @@ export default function CriaCategoria() {
     try {
       console.log('Enviando token no header (criar):', token);
       const response = await fetch(
-        `${IP_CELULAR}/api/categoria`,
+        `http://192.168.95.119:4000/api/categoria`,
         {
           method: 'POST',
           headers: {

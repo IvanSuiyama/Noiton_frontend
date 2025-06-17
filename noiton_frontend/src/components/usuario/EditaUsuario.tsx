@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { useUserContext } from '@/context/UserContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
+// import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
 import { useNavigation, CommonActions } from '@react-navigation/native'; // Import navigation hook and CommonActions
 
 const Footer = () => (
@@ -25,7 +25,7 @@ export default function EditaUsuario() {
 
   const fetchUserData = async (cpf: string) => {
     try {
-      const response = await fetch(`${IP_CELULAR}/api/usuario/${cpf}`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/usuario/${cpf}`, {
         method: 'GET',
       });
 
@@ -58,7 +58,7 @@ export default function EditaUsuario() {
         telefone,
       };
 
-      const response = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/usuario/${userCpf}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

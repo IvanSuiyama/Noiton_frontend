@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Alert, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import Categoria from '@/models/Categoria';
-import { IP_WIFI, IP_CELULAR } from '@env'; // Importa a variável do .env
 import { useAuth } from '@/context/ApiContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -44,7 +43,7 @@ export default function ListarCategoria() {
     const fetchCategorias = async () => {
       try {
         console.log('Enviando token no header:', token);
-        const response = await fetch(`${IP_WIFI}/api/categorialist`, {
+        const response = await fetch(`http://192.168.95.119:4000/api/categorialist`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -74,7 +73,7 @@ export default function ListarCategoria() {
     try {
       console.log('Enviando token no header (delete):', token);
       const response = await fetch(
-        `${IP_CELULAR}/api/categoria/${id}`,
+        `http://192.168.95.119:4000/api/categoria/${id}`,
         {
           method: 'DELETE',
           headers: {

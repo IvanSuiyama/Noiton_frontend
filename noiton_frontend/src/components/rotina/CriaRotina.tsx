@@ -6,7 +6,6 @@ import { useUserContext } from '@/context/UserContext';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
-import { IP_CELULAR } from '@env';
 import MultiSelectDias from './MultiSelectDias';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -55,7 +54,7 @@ export default function CriaRotina() {
 
   useEffect(() => {
     if (!token || !userCpf) return;
-    fetch(`${IP_CELULAR}/api/tarefa/list`, {
+    fetch(`http://192.168.95.119:4000/api/tarefa/list`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -69,7 +68,7 @@ export default function CriaRotina() {
       return;
     }
     try {
-      const resp = await fetch(`${IP_CELULAR}/api/rotinas`, {
+      const resp = await fetch(`http://192.168.95.119:4000/api/rotinas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -107,7 +106,7 @@ export default function CriaRotina() {
               {tarefas
                 .filter((t, idx, arr) => arr.findIndex(x => x.id_tarefa === t.id_tarefa) === idx)
                 .map(tarefa => (
-                  <Picker.Item key={tarefa.id_tarefa} label={tarefa.titulo} value={tarefa.id_tarefa} />
+                  <Picker.Item label={tarefa.titulo} value={tarefa.id_tarefa} />
                 ))}
             </Picker>
           </View>

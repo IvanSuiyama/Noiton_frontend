@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Alert, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import Usuario from '../../models/Usuario';
-import { IP_WIFI, IP_CELULAR } from '@env'; // Import the variable from .env
+// import { IP_WIFI, IP_CELULAR } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
@@ -84,7 +84,7 @@ export default function CriaUsuario() {
     try {
       // Verifica se o e-mail já está cadastrado
       const response = await fetch(
-        `${IP_CELULAR}/api/usuario/list`,
+        `${'http://192.168.95.119:4000'}/api/usuario/list`,
         {
           method: 'GET',
         }
@@ -113,7 +113,7 @@ export default function CriaUsuario() {
       };
 
       const createResponse = await fetch(
-        `${IP_CELULAR}/api/usuario`, // Use the IP_WIFI variable
+        `${'http://192.168.95.119:4000'}/api/usuario`, // Use the IP_WIFI variable
         {
           method: 'POST',
           headers: {

@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, Switch, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Tarefa } from '../../models/Tarefa';
-import { IP_WIFI, IP_CELULAR } from '@env';
 import { useNavigation, useFocusEffect, useIsFocused, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/routes/Route';
@@ -105,7 +104,7 @@ export default function CriaTarefa() {
       const fetchCategorias = async () => {
         try {
           console.log('Enviando token no header (categorias):', token);
-          let response = await fetch(`${IP_CELULAR}/api/categoria/list`, {
+          let response = await fetch(`http://192.168.95.119:4000/api/categoria/list`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -115,7 +114,7 @@ export default function CriaTarefa() {
             return;
           }
           if (!response.ok) {
-            response = await fetch(`${IP_WIFI}/api/categorialist`, {
+            response = await fetch(`http://192.168.95.119:4000/api/categorialist`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -275,7 +274,7 @@ export default function CriaTarefa() {
 
     try {
       console.log('Enviando token no header (criar tarefa):', token);
-      const response = await fetch(`${IP_CELULAR}/api/tarefa`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/tarefa`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

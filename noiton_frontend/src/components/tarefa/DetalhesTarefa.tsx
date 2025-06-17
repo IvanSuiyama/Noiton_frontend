@@ -80,7 +80,7 @@ export default function DetalhesTarefa() {
     if (!tarefaId) return;
     setLoadingArquivos(true);
     try {
-      const resp = await fetch(`${process.env.IP_CELULAR || ''}/api/tarefa/${tarefaId}/arquivos`, {
+      const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/${tarefaId}/arquivos`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await resp.json();
@@ -95,7 +95,7 @@ export default function DetalhesTarefa() {
   useEffect(() => {
     if (!tarefaId) return;
     setLoadingSub(true);
-    fetch(`${process.env.IP_CELULAR || ''}/api/tarefa/${tarefaId}/subtarefas`, {
+    fetch(`http://192.168.95.119:4000/api/tarefa/${tarefaId}/subtarefas`, {
       headers: { 'Authorization': `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -121,7 +121,7 @@ export default function DetalhesTarefa() {
         name: file.name || 'file.pdf',
         type: 'application/pdf',
       } as any);
-      const resp = await fetch(`${process.env.IP_CELULAR || ''}/api/tarefa/${tarefaId}/upload`, {
+      const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/${tarefaId}/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -140,7 +140,7 @@ export default function DetalhesTarefa() {
   // Função para baixar PDF
   const handleDownload = async (caminho: string) => {
     try {
-      const url = `${process.env.IP_CELULAR || ''}/api/tarefa/arquivo/download?caminho=${encodeURIComponent(caminho)}`;
+      const url = `http://192.168.95.119:4000/api/tarefa/arquivo/download?caminho=${encodeURIComponent(caminho)}`;
       const fileName = caminho.split('/').pop() || 'arquivo.pdf';
       const tempFileUri = FileSystem.cacheDirectory + fileName;
       const response = await FileSystem.downloadAsync(url, tempFileUri, {
@@ -203,7 +203,7 @@ export default function DetalhesTarefa() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const resp = await fetch(`${process.env.IP_CELULAR || ''}/api/tarefa/arquivo/${id_arquivo}`, {
+              const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/arquivo/${id_arquivo}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` },
               });
@@ -310,7 +310,7 @@ export default function DetalhesTarefa() {
                             style: 'destructive',
                             onPress: async () => {
                               try {
-                                const resp = await fetch(`${process.env.IP_CELULAR || ''}/api/tarefa/${sub.id_tarefa}`, {
+                                const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/${sub.id_tarefa}`, {
                                   method: 'DELETE',
                                   headers: { 'Authorization': `Bearer ${token}` },
                                 });

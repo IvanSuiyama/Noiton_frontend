@@ -4,6 +4,17 @@
       "android": {
         "buildType": "apk"
       }
+    },
+    "development": {
+      "android": {
+        "buildType": "apk",
+        "developmentClient": true
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   }
 }

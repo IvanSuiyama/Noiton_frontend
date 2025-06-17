@@ -5,7 +5,7 @@ import { useUserContext } from '@/context/UserContext';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '@/routes/Route';
-import { IP_CELULAR } from '@env';
+// import { IP_CELULAR } from '@env';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function RotinasScreen() {
@@ -59,7 +59,7 @@ export default function RotinasScreen() {
   // Busca tarefas para mostrar o nome da tarefa base
   useEffect(() => {
     if (!token) return;
-    fetch(`${IP_CELULAR}/api/tarefa/list`, {
+    fetch(`http://192.168.95.119:4000/api/tarefa/list`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
@@ -71,7 +71,7 @@ export default function RotinasScreen() {
     if (!token || !userCpf) return;
     setLoading(true);
     try {
-      const resp = await fetch(`${IP_CELULAR}/api/rotinas?cpf=${userCpf}`, {
+      const resp = await fetch(`http://192.168.95.119:4000/api/rotinas?cpf=${userCpf}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!resp.ok) throw new Error('Erro ao buscar rotinas');
@@ -109,7 +109,7 @@ export default function RotinasScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await fetch(`${IP_CELULAR}/api/rotinas/${id}`, {
+              await fetch(`http://192.168.95.119:4000/api/rotinas/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },
               });

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '@/context/ApiContext';
 import { useUserContext } from '@/context/UserContext';
-import { IP_CELULAR } from '@env';
 import { useLanguage } from '@/context/LanguageContext';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -66,7 +65,7 @@ export default function ProgressoTarefas() {
       if (!token || !userCpf) return;
       setLoading(true);
       try {
-        const resp = await fetch(`${IP_CELULAR}/api/tarefa/list?cpf=${userCpf}`,
+        const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/list?cpf=${userCpf}`,
           { headers: { Authorization: `Bearer ${token}` } });
         if (!resp.ok) throw new Error();
         const data = await resp.json();

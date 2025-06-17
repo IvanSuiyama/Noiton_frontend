@@ -1,6 +1,6 @@
 import { useAuth } from '@/context/ApiContext';
 import { useUserContext } from '@/context/UserContext';
-import { IP_CELULAR } from '@env';
+// import { IP_CELULAR } from '@env';
 import { useEffect, useRef, useState } from 'react';
 import { Tarefa } from '@/models/Tarefa';
 import type { Notificacao } from '@/models/Notificacao';
@@ -15,7 +15,7 @@ export function useCriarNotificacao() {
     async function fetchUserEmail() {
       if (!userCpf || !token) return;
       try {
-        const resp = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, {
+        const resp = await fetch(`http://192.168.95.119:4000/api/usuario/${userCpf}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (resp.ok) {
@@ -33,7 +33,7 @@ export function useCriarNotificacao() {
       // Busca email atualizado se não tiver
       let email = userEmail;
       if (!email) {
-        const resp = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, {
+        const resp = await fetch(`http://192.168.95.119:4000/api/usuario/${userCpf}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (resp.ok) {
@@ -41,7 +41,7 @@ export function useCriarNotificacao() {
           email = usuario.email || null;
         }
       }
-      const response = await fetch(`${IP_CELULAR}/api/notificacoes`, {
+      const response = await fetch(`http://192.168.95.119:4000/api/notificacoes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ export function useMonitorarTarefasAmanha(callback: (tarefas: Tarefa[]) => void)
         amanha.setHours(0, 0, 0, 0);
         const amanhaISO = amanha.toISOString().slice(0, 10); // 'YYYY-MM-DD'
         // Busca tarefas com data_fim igual a amanhã
-        const url = `${IP_CELULAR}/api/tarefa/list?prazoFinal=${amanhaISO}&cpf=${userCpf}`;
+        const url = `http://192.168.95.119:4000/api/tarefa/list?prazoFinal=${amanhaISO}&cpf=${userCpf}`;
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -125,12 +125,12 @@ export function useMonitorarTarefasVencimentoDetalhado() {
         amanha.setHours(0, 0, 0, 0);
         const amanhaISO = amanha.toISOString().slice(0, 10);
         // Busca tarefas do usuário
-        const urlTarefas = `${IP_CELULAR}/api/tarefa/list?cpf=${userCpf}`;
+        const urlTarefas = `http://192.168.95.119:4000/api/tarefa/list?cpf=${userCpf}`;
         const respTarefas = await fetch(urlTarefas, { headers: { Authorization: `Bearer ${token}` } });
         if (!respTarefas.ok) { console.log('Erro ao buscar tarefas'); return; }
         const tarefas: Tarefa[] = await respTarefas.json();
         // Busca notificações existentes
-        const urlNotificacoes = `${IP_CELULAR}/api/notificacoes?cpf=${userCpf}`;
+        const urlNotificacoes = `http://192.168.95.119:4000/api/notificacoes?cpf=${userCpf}`;
         const respNotif = await fetch(urlNotificacoes, { headers: { Authorization: `Bearer ${token}` } });
         const notificacoes: Notificacao[] = respNotif.ok ? await respNotif.json() : [];
         for (const tarefa of tarefas) {
@@ -151,13 +151,13 @@ export function useMonitorarTarefasVencimentoDetalhado() {
               // Buscar email do usuário
               let email: string | null = null;
               try {
-                const resp = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, { headers: { Authorization: `Bearer ${token}` } });
+                const resp = await fetch(`http://192.168.95.119:4000/api/usuario/${userCpf}`, { headers: { Authorization: `Bearer ${token}` } });
                 if (resp.ok) {
                   const usuario = await resp.json();
                   email = usuario.email || null;
                 }
               } catch {}
-              const response = await fetch(`${IP_CELULAR}/api/notificacoes`, {
+              const response = await fetch(`http://192.168.95.119:4000/api/notificacoes`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -192,18 +192,18 @@ export async function monitorarTarefasVencimentoDetalhadoNow(token?: string, use
     amanha.setHours(0, 0, 0, 0);
     const amanhaISO = amanha.toISOString().slice(0, 10);
     // Busca tarefas do usuário
-    const urlTarefas = `${IP_CELULAR}/api/tarefa/list?cpf=${userCpf}`;
+    const urlTarefas = `http://192.168.95.119:4000/api/tarefa/list?cpf=${userCpf}`;
     const respTarefas = await fetch(urlTarefas, { headers: { Authorization: `Bearer ${token}` } });
     if (!respTarefas.ok) { console.log('Erro ao buscar tarefas'); return; }
     const tarefas: Tarefa[] = await respTarefas.json();
     // Busca notificações existentes
-    const urlNotificacoes = `${IP_CELULAR}/api/notificacoes?cpf=${userCpf}`;
+    const urlNotificacoes = `http://192.168.95.119:4000/api/notificacoes?cpf=${userCpf}`;
     const respNotif = await fetch(urlNotificacoes, { headers: { Authorization: `Bearer ${token}` } });
     const notificacoes: Notificacao[] = respNotif.ok ? await respNotif.json() : [];
     // Buscar email do usuário
     let email: string | null = null;
     try {
-      const resp = await fetch(`${IP_CELULAR}/api/usuario/${userCpf}`, { headers: { Authorization: `Bearer ${token}` } });
+      const resp = await fetch(`http://192.168.95.119:4000/api/usuario/${userCpf}`, { headers: { Authorization: `Bearer ${token}` } });
       if (resp.ok) {
         const usuario = await resp.json();
         email = usuario.email || null;
@@ -224,7 +224,7 @@ export async function monitorarTarefasVencimentoDetalhadoNow(token?: string, use
         }
         console.log(`Tarefa (${tarefa.titulo}) data próxima, criando notificação...`);
         try {
-          const response = await fetch(`${IP_CELULAR}/api/notificacoes`, {
+          const response = await fetch(`http://192.168.95.119:4000/api/notificacoes`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

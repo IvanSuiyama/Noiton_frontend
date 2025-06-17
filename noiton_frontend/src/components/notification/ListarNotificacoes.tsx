@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useAuth } from '@/context/ApiContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { IP_CELULAR } from '@env';
+// import { IP_CELULAR } from '@env';
 
 import type { Notificacao } from '@/models/Notificacao';
 import { Tarefa } from '@/models/Tarefa';
@@ -30,12 +30,15 @@ export default function ListarNotificacoes() {
     const fetchNotificacoes = async () => {
       if (!isAuthenticated || !token) return;
       try {
-        const response = await fetch(`${IP_CELULAR}/api/notificacoes`, {
+        const response = await fetch(`http://192.168.95.119:4000/api/notificacoes`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error(t.erro + ' ao buscar notificações');
         const data = await response.json();
-        setNotificacoes(data);
+        const notificacoesUnicas = Array.isArray(data)
+          ? data.filter((n, idx, arr) => arr.findIndex(x => x.id === n.id) === idx)
+          : [];
+        setNotificacoes(notificacoesUnicas);
       } catch (error) {
         Alert.alert(t.erro, error instanceof Error ? error.message : t.erro);
       } finally {
@@ -54,7 +57,7 @@ export default function ListarNotificacoes() {
       for (const id of ids) {
         if (tarefasMap[id]) continue;
         try {
-          const resp = await fetch(`${IP_CELULAR}/api/tarefa/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+          const resp = await fetch(`http://192.168.95.119:4000/api/tarefa/${id}`, { headers: { Authorization: `Bearer ${token}` } });
           if (resp.ok) {
             const tarefa: Tarefa = await resp.json();
             nomes[id] = tarefa.titulo;

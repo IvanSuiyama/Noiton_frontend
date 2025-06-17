@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TextInput, Alert, KeyboardAvoidingView, ScrollV
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Use NativeStackNavigationProp
 import type { RootStackParamList } from '@/routes/Route'; // Importação do tipo RootStackParamList
-import { IP_WIFI, IP_CELULAR } from '@env'; // Importa a variável do .env
+// import { IP_WIFI, IP_CELULAR } from '@env'; // Importa a variável do .env
 import { useUserContext } from '@/context/UserContext'; // Import the UserContext
 import { useAuth } from '@/context/ApiContext'; // Importa o AuthContext
 import { useLanguage } from '@/context/LanguageContext';
@@ -46,7 +46,7 @@ export default function Login() {
       console.log('Tentando login com:', { email, senha: password });
 
       const response = await fetch(
-        `${IP_CELULAR}/api/login`, // Utiliza a variável IP_WIFI
+        `http://192.168.95.119:4000/api/login`, // Utiliza a variável IP_WIFI
         {
           method: 'POST',
           headers: {
